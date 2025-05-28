@@ -25,7 +25,12 @@ async function main() {
     console.error('   • Task Management (list, create, get, update, delete)');
     console.error('   • Subtask Management (list, create, get, update, delete)');
     console.error('');
-    console.error('💡 Use list_projects to get started!');
+    console.error('🧠 Agent Memories features available:');
+    console.error('   • Memory Management (create, search, get, list, update, delete)');
+    console.error('   • Vector-based semantic search with LanceDB');
+    console.error('   • Persistent storage with metadata and categorization');
+    console.error('');
+    console.error('💡 Use list_projects to get started with tasks, or create_memory_Agentic_Tools for memories!');
   } catch (error) {
     console.error('❌ Failed to start MCP server:', error);
     process.exit(1);

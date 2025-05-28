@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { FileStorage } from './features/task-management/storage/file-storage.js';
+import { LanceDBMemoryStorage } from './features/agent-memories/storage/lancedb-storage.js';
 import { z } from 'zod';
 
 // Project tools
@@ -23,6 +24,14 @@ import { createGetSubtaskTool } from './features/task-management/tools/subtasks/
 import { createUpdateSubtaskTool } from './features/task-management/tools/subtasks/update.js';
 import { createDeleteSubtaskTool } from './features/task-management/tools/subtasks/delete.js';
 
+// Memory tools
+import { createCreateMemoryTool } from './features/agent-memories/tools/memories/create.js';
+import { createSearchMemoriesTool } from './features/agent-memories/tools/memories/search.js';
+import { createGetMemoryTool } from './features/agent-memories/tools/memories/get.js';
+import { createListMemoriesTool } from './features/agent-memories/tools/memories/list.js';
+import { createUpdateMemoryTool } from './features/agent-memories/tools/memories/update.js';
+import { createDeleteMemoryTool } from './features/agent-memories/tools/memories/delete.js';
+
 /**
  * Create storage instance for a specific working directory
  */
@@ -33,7 +42,16 @@ async function createStorage(workingDirectory: string): Promise<FileStorage> {
 }
 
 /**
- * Create and configure the MCP server for task management
+ * Create memory storage instance for a specific working directory
+ */
+async function createMemoryStorage(workingDirectory: string): Promise<LanceDBMemoryStorage> {
+  const storage = new LanceDBMemoryStorage(workingDirectory);
+  await storage.initialize();
+  return storage;
+}
+
+/**
+ * Create and configure the MCP server for task management and agent memories
  */
 export async function createServer(): Promise<McpServer> {
   // Create MCP server
@@ -393,6 +411,190 @@ export async function createServer(): Promise<McpServer> {
       try {
         const storage = await createStorage(workingDirectory);
         const tool = createDeleteSubtaskTool(storage);
+        return await tool.handler({ id, confirm });
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Register agent memory management tools
+  server.tool(
+    'create_memory_Agentic_Tools',
+    {
+      workingDirectory: z.string(),
+      content: z.string(),
+      metadata: z.record(z.any()).optional(),
+      agentId: z.string().optional(),
+      category: z.string().optional(),
+      importance: z.number().min(1).max(10).optional(),
+      embedding: z.array(z.number()).optional()
+    },
+    async ({ workingDirectory, content, metadata, agentId, category, importance, embedding }: {
+      workingDirectory: string;
+      content: string;
+      metadata?: Record<string, any>;
+      agentId?: string;
+      category?: string;
+      importance?: number;
+      embedding?: number[];
+    }) => {
+      try {
+        const storage = await createMemoryStorage(workingDirectory);
+        const tool = createCreateMemoryTool(storage);
+        return await tool.handler({ content, metadata, agentId, category, importance, embedding });
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'search_memories_Agentic_Tools',
+    {
+      workingDirectory: z.string(),
+      query: z.string(),
+      limit: z.number().min(1).max(100).optional(),
+      threshold: z.number().min(0).max(1).optional(),
+      agentId: z.string().optional(),
+      category: z.string().optional(),
+      minImportance: z.number().min(1).max(10).optional()
+    },
+    async ({ workingDirectory, query, limit, threshold, agentId, category, minImportance }: {
+      workingDirectory: string;
+      query: string;
+      limit?: number;
+      threshold?: number;
+      agentId?: string;
+      category?: string;
+      minImportance?: number;
+    }) => {
+      try {
+        const storage = await createMemoryStorage(workingDirectory);
+        const tool = createSearchMemoriesTool(storage);
+        return await tool.handler({ query, limit, threshold, agentId, category, minImportance });
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'get_memory_Agentic_Tools',
+    {
+      workingDirectory: z.string(),
+      id: z.string()
+    },
+    async ({ workingDirectory, id }: { workingDirectory: string; id: string }) => {
+      try {
+        const storage = await createMemoryStorage(workingDirectory);
+        const tool = createGetMemoryTool(storage);
+        return await tool.handler({ id });
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'list_memories_Agentic_Tools',
+    {
+      workingDirectory: z.string(),
+      agentId: z.string().optional(),
+      category: z.string().optional(),
+      limit: z.number().min(1).max(1000).optional()
+    },
+    async ({ workingDirectory, agentId, category, limit }: {
+      workingDirectory: string;
+      agentId?: string;
+      category?: string;
+      limit?: number;
+    }) => {
+      try {
+        const storage = await createMemoryStorage(workingDirectory);
+        const tool = createListMemoriesTool(storage);
+        return await tool.handler({ agentId, category, limit });
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'update_memory_Agentic_Tools',
+    {
+      workingDirectory: z.string(),
+      id: z.string(),
+      content: z.string().optional(),
+      metadata: z.record(z.any()).optional(),
+      category: z.string().optional(),
+      importance: z.number().min(1).max(10).optional()
+    },
+    async ({ workingDirectory, id, content, metadata, category, importance }: {
+      workingDirectory: string;
+      id: string;
+      content?: string;
+      metadata?: Record<string, any>;
+      category?: string;
+      importance?: number;
+    }) => {
+      try {
+        const storage = await createMemoryStorage(workingDirectory);
+        const tool = createUpdateMemoryTool(storage);
+        return await tool.handler({ id, content, metadata, category, importance });
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'delete_memory_Agentic_Tools',
+    {
+      workingDirectory: z.string(),
+      id: z.string(),
+      confirm: z.boolean()
+    },
+    async ({ workingDirectory, id, confirm }: { workingDirectory: string; id: string; confirm: boolean }) => {
+      try {
+        const storage = await createMemoryStorage(workingDirectory);
+        const tool = createDeleteMemoryTool(storage);
         return await tool.handler({ id, confirm });
       } catch (error) {
         return {
