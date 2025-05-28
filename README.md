@@ -14,11 +14,11 @@ A comprehensive Model Context Protocol (MCP) server providing AI assistants with
 - **Git-Trackable**: Task data can be committed alongside your code
 
 ### 🧠 Agent Memories System
-- **Persistent Memory**: Store and retrieve agent memories with semantic content
-- **Vector Search**: LanceDB-powered semantic similarity search
-- **Smart Organization**: Categorize memories by agent, category, and importance
+- **Persistent Memory**: Store and retrieve agent memories with titles and detailed content
+- **Intelligent Search**: Multi-field text search with relevance scoring across titles, content, and categories
+- **Smart Ranking**: Advanced scoring algorithm prioritizes title matches (60%), content matches (30%), and category bonuses (20%)
 - **Rich Metadata**: Flexible metadata system for enhanced context
-- **Auto-Embedding**: Automatic vector generation for semantic search
+- **JSON Storage**: Individual JSON files organized by category, named after memory titles
 - **Project-Specific**: Isolated memory storage per working directory
 
 ### 🔧 MCP Tools Available
@@ -45,11 +45,11 @@ A comprehensive Model Context Protocol (MCP) server providing AI assistants with
 - `delete_subtask` - Delete a specific subtask
 
 #### Agent Memory Management
-- `create_memory` - Create a new memory with automatic embedding
-- `search_memories` - Search memories using semantic similarity
+- `create_memory` - Store new memories with title and detailed content
+- `search_memories` - Find memories using intelligent multi-field search with relevance scoring
 - `get_memory` - Get detailed memory information
 - `list_memories` - List memories with optional filtering
-- `update_memory` - Edit memory content, metadata, or categorization
+- `update_memory` - Edit memory title, content, metadata, or categorization
 - `delete_memory` - Delete a memory (requires confirmation)
 
 **Important**: All tools require a `workingDirectory` parameter to specify where the data should be stored. This enables project-specific task and memory management.
@@ -91,7 +91,7 @@ Add to your Claude Desktop configuration:
    - **Command**: `npx -y @pimzino/agentic-tools-mcp`
 3. Restart VS Code
 
-**Features Available**: Task management, agent memories, and vector search capabilities.
+**Features Available**: Task management, agent memories, and text-based search capabilities.
 
 ### With Other MCP Clients
 The server uses STDIO transport and can be integrated with any MCP-compatible client:
@@ -144,14 +144,12 @@ npx -y @pimzino/agentic-tools-mcp
 ```typescript
 {
   id: string;                    // Unique identifier
-  content: string;               // Memory content/text
-  embedding?: number[];          // Vector representation (auto-generated)
+  title: string;                 // Short title for file naming (max 50 characters)
+  content: string;               // Detailed memory content/text (no limit)
   metadata: Record<string, any>; // Flexible metadata object
   createdAt: string;            // ISO timestamp
   updatedAt: string;            // ISO timestamp
-  agentId?: string;             // Optional agent identifier
   category?: string;            // Optional categorization
-  importance?: number;          // Optional importance score (1-10)
 }
 ```
 
@@ -194,30 +192,29 @@ npx -y @pimzino/agentic-tools-mcp
 
 1. **Create a Memory**
    ```
-   Use create_memory_Agentic_Tools with:
+   Use create_memory with:
    - workingDirectory="/path/to/your/project"
-   - content="User prefers concise responses and technical explanations"
+   - title="User prefers concise technical responses"
+   - content="The user has explicitly stated they prefer concise responses with technical explanations. They value brevity but want detailed technical information when relevant."
    - metadata={"source": "conversation", "confidence": 0.9}
-   - agentId="assistant-1"
    - category="user_preferences"
-   - importance=9
    ```
 
 2. **Search Memories**
    ```
-   Use search_memories_Agentic_Tools with:
+   Use search_memories with:
    - workingDirectory="/path/to/your/project"
-   - query="how does the user like responses"
+   - query="user preferences responses"
    - limit=5
-   - threshold=0.8
+   - threshold=0.3
    - category="user_preferences"
    ```
 
 3. **List and Manage**
    ```
-   Use list_memories_Agentic_Tools to view all memories
-   Use update_memory_Agentic_Tools to modify existing memories
-   Use delete_memory_Agentic_Tools to remove outdated memories
+   Use list_memories to view all memories
+   Use update_memory to modify existing memories (title, content, metadata, category)
+   Use delete_memory to remove outdated memories
    (All with workingDirectory parameter)
    ```
 
@@ -230,7 +227,7 @@ npx -y @pimzino/agentic-tools-mcp
 - **Git-trackable**: All data can be committed alongside your project code
 - **Persistent**: All data persists between server restarts
 - **Atomic**: All operations are atomic to prevent data corruption
-- **Vector Database**: LanceDB for efficient semantic search of memories
+- **JSON Storage**: Simple file-based storage for efficient memory organization
 - **Backup-friendly**: Simple file-based storage for easy backup and migration
 
 ### Storage Structure
@@ -239,9 +236,13 @@ your-project/
 ├── .agentic-tools-mcp/
 │   ├── tasks/              # Task management data for this project
 │   │   └── tasks.json      # Projects, tasks, and subtasks data
-│   └── memories/           # LanceDB vector database for memories
-│       ├── data/
-│       └── metadata/
+│   └── memories/           # JSON file storage for memories
+│       ├── preferences/    # User preferences category
+│       │   └── User_prefers_concise_technical_responses.json
+│       ├── technical/      # Technical information category
+│       │   └── React_TypeScript_project_with_strict_ESLint.json
+│       └── context/        # Context information category
+│           └── User_works_in_healthcare_needs_HIPAA_compliance.json
 ├── src/
 ├── package.json
 └── README.md
@@ -259,7 +260,7 @@ All MCP tools require a `workingDirectory` parameter that specifies:
 - **Project Isolation**: Each project has its own task management and memory system
 - **Multi-Project Workflow**: Work on multiple projects simultaneously with isolated memories
 - **Backup & Migration**: File-based storage travels with your code
-- **Semantic Search**: Vector-based memory search for intelligent context retrieval
+- **Text Search**: Simple content-based memory search for intelligent context retrieval
 - **Agent Continuity**: Persistent agent memories across sessions and deployments
 
 ## Error Handling
@@ -298,7 +299,7 @@ src/
 │       ├── tools/           # Memory MCP tool implementations
 │       │   └── memories/    # Memory CRUD operations
 │       ├── models/          # Memory TypeScript interfaces
-│       └── storage/         # LanceDB storage implementation
+│       └── storage/         # JSON file storage implementation
 ├── server.ts            # MCP server configuration
 └── index.ts             # Entry point
 ```
@@ -312,25 +313,26 @@ src/
 - Use absolute paths for reliability
 - Check directory permissions
 
-**"Vector search returns no results"** (Agent Memories)
-- Default threshold is 0.3 - try lowering to 0.2 or 0.1 if needed
-- Check that embeddings are being generated correctly
-- Verify that the query content is meaningful
+**"Text search returns no results"** (Agent Memories)
+- Try using different keywords or phrases
+- Check that memories contain the search terms
+- Verify that the query content matches memory content
 
-**"Database not initialized"** (Agent Memories)
+**"Memory files not found"** (Agent Memories)
 - Ensure the working directory exists and is writable
-- Check LanceDB installation and compatibility
+- Check that the .agentic-tools-mcp/memories directory was created
 
 ## Version History
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and release notes.
 
-### Current Version: 1.3.0
+### Current Version: 1.4.0
 - ✅ Complete task management system
-- ✅ Agent memories with vector search
-- ✅ LanceDB integration
-- ✅ Project-specific storage
-- ✅ Comprehensive MCP tools
+- ✅ Agent memories with title/content architecture and JSON file storage
+- ✅ Intelligent multi-field search with relevance scoring
+- ✅ Cross-platform file path handling
+- ✅ Project-specific storage with comprehensive MCP tools
+- ✅ Simplified schema with enhanced documentation
 
 ## Acknowledgments
 
@@ -338,7 +340,7 @@ We're grateful to the open-source community and the following projects that make
 
 ### Core Technologies
 - **[@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk)** - The foundation for MCP server implementation
-- **[LanceDB](https://lancedb.github.io/lancedb/)** - High-performance vector database for semantic search
+- **[Node.js File System](https://nodejs.org/api/fs.html)** - Reliable file-based storage for memory persistence
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript development
 - **[Node.js](https://nodejs.org/)** - JavaScript runtime environment
 
@@ -347,9 +349,9 @@ We're grateful to the open-source community and the following projects that make
 - **[ESLint](https://eslint.org/)** - Code quality and consistency
 - **[Prettier](https://prettier.io/)** - Code formatting
 
-### Vector Database & AI
-- **[Apache Arrow](https://arrow.apache.org/)** - Columnar in-memory analytics (used by LanceDB)
-- **Vector Search Technology** - Enabling semantic similarity search for agent memories
+### File Storage & Search
+- **JSON** - Simple, human-readable data format for memory storage
+- **Text Search** - Efficient content-based search across memory files
 
 ### Special Thanks
 - **Open Source Community** - For creating the tools and libraries that make this project possible

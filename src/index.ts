@@ -2,6 +2,7 @@
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createServer } from './server.js';
+import { getVersionString } from './utils/version.js';
 
 /**
  * Main entry point for the MCP task management server
@@ -19,7 +20,7 @@ async function main() {
     await server.connect(transport);
 
     // Log server start (to stderr so it doesn't interfere with MCP communication)
-    console.error('🚀 Agentic Tools MCP Server started successfully');
+    console.error(`🚀 Agentic Tools MCP Server ${getVersionString()} started successfully`);
     console.error('📋 Task Management features available:');
     console.error('   • Project Management (list, create, get, update, delete)');
     console.error('   • Task Management (list, create, get, update, delete)');
@@ -27,10 +28,10 @@ async function main() {
     console.error('');
     console.error('🧠 Agent Memories features available:');
     console.error('   • Memory Management (create, search, get, list, update, delete)');
-    console.error('   • Vector-based semantic search with LanceDB');
-    console.error('   • Persistent storage with metadata and categorization');
+    console.error('   • Intelligent multi-field text search with relevance scoring');
+    console.error('   • JSON file storage with title/content architecture');
     console.error('');
-    console.error('💡 Use list_projects to get started with tasks, or create_memory_Agentic_Tools for memories!');
+    console.error('💡 Use list_projects to get started with tasks, or create_memory for memories!');
   } catch (error) {
     console.error('❌ Failed to start MCP server:', error);
     process.exit(1);

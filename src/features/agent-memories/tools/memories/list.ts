@@ -10,20 +10,17 @@ import { MemoryStorage } from '../../storage/storage.js';
 export function createListMemoriesTool(storage: MemoryStorage) {
   return {
     name: 'list_memories',
-    description: 'List memories with optional filtering by agent ID, category, and limit',
+    description: 'List memories with optional filtering by category and limit',
     inputSchema: {
-      agentId: z.string().optional(),
       category: z.string().optional(),
       limit: z.number().min(1).max(1000).optional()
     },
-    handler: async ({ 
-      agentId, 
-      category, 
-      limit = 50 
-    }: { 
-      agentId?: string; 
-      category?: string; 
-      limit?: number; 
+    handler: async ({
+      category,
+      limit = 50
+    }: {
+      category?: string;
+      limit?: number;
     }) => {
       try {
         // Validate inputs
@@ -32,16 +29,6 @@ export function createListMemoriesTool(storage: MemoryStorage) {
             content: [{
               type: 'text' as const,
               text: 'Error: Limit must be between 1 and 1000.'
-            }],
-            isError: true
-          };
-        }
-
-        if (agentId && agentId.trim().length > 100) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Agent ID must be 100 characters or less.'
             }],
             isError: true
           };
@@ -58,8 +45,8 @@ export function createListMemoriesTool(storage: MemoryStorage) {
         }
 
         const memories = await storage.getMemories(
-          agentId?.trim(), 
-          category?.trim(), 
+          undefined, // agentId removed
+          category?.trim(),
           limit
         );
 
@@ -70,7 +57,6 @@ export function createListMemoriesTool(storage: MemoryStorage) {
               text: `📝 No memories found.
 
 **Filters:** ${[
-                agentId && `Agent: ${agentId}`,
                 category && `Category: ${category}`
               ].filter(Boolean).join(', ') || 'None'}
 
@@ -80,14 +66,14 @@ Create some memories using the create_memory tool to get started!`
         }
 
         // Sort memories by creation date (newest first)
-        const sortedMemories = memories.sort((a, b) => 
+        const sortedMemories = memories.sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
         const memoryList = sortedMemories.map((memory, index) => {
-          return `**${index + 1}. ${memory.id}**
+          return `**${index + 1}. ${memory.title}**
 Content: ${memory.content.substring(0, 150)}${memory.content.length > 150 ? '...' : ''}
-Agent: ${memory.agentId || 'Not specified'} | Category: ${memory.category || 'Not specified'} | Importance: ${memory.importance || 'Not specified'}
+Category: ${memory.category || 'Not specified'}
 Created: ${new Date(memory.createdAt).toLocaleString()}`;
         }).join('\n\n');
 
@@ -100,7 +86,6 @@ Created: ${new Date(memory.createdAt).toLocaleString()}`;
             text: `📝 Found ${memories.length} memory(ies):
 
 **Filters:** ${[
-              agentId && `Agent: ${agentId}`,
               category && `Category: ${category}`
             ].filter(Boolean).join(', ') || 'None'}
 **Limit:** ${limit}
@@ -111,12 +96,11 @@ ${memoryList}
 
 **📊 Overall Statistics:**
 • Total memories: ${stats.totalMemories}
-• Agents: ${Object.keys(stats.memoriesByAgent).length}
 • Categories: ${Object.keys(stats.memoriesByCategory).length}
 • Oldest memory: ${stats.oldestMemory ? new Date(stats.oldestMemory).toLocaleString() : 'None'}
 • Newest memory: ${stats.newestMemory ? new Date(stats.newestMemory).toLocaleString() : 'None'}
 
-Use get_memory with a specific ID to see full details, or search_memories for semantic search.`
+Use get_memory with a specific ID to see full details, or search_memories for text-based search.`
           }]
         };
       } catch (error) {

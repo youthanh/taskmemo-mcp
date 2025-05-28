@@ -5,6 +5,160 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-05-29
+
+### 🚀 MAJOR: Memory System Architecture Overhaul
+
+This release represents a **complete architectural redesign** of the agent memories system, moving from vector database storage to a simplified, user-friendly JSON file-based approach with intelligent text search.
+
+### Added
+
+#### 📝 Title/Content Separation Architecture
+- **Breaking Change**: Memory interface now requires separate `title` and `content` fields
+- **Title Field**: Short, descriptive titles (max 50 characters) used for clean file naming
+- **Content Field**: Detailed memory information with no character limits
+- **File Naming**: Memory files now named after sanitized titles for better organization
+- **Validation**: Hard 50-character limit on titles with helpful error messages and examples
+
+#### 🔍 Intelligent Multi-Field Search System
+- **Enhanced Search**: Searches across title, content, and category fields simultaneously
+- **Advanced Scoring**: Sophisticated relevance algorithm with field-based priority weighting
+- **Title Priority**: Title matches receive 60% weight (highest priority)
+- **Content Priority**: Content matches receive 30% weight (medium priority)
+- **Category Bonus**: Category matches add 20% bonus to relevance score
+- **Position Scoring**: Earlier matches in text receive higher relevance scores
+- **Frequency Scoring**: Multiple occurrences of search terms boost relevance
+
+#### 📊 Comprehensive Search Scoring Documentation
+- **Algorithm Transparency**: Complete documentation of relevance scoring calculations
+- **Score Interpretation**: Clear guidelines for understanding relevance percentages
+- **Optimization Guide**: Best practices for structuring memories for maximum searchability
+- **Real-World Examples**: Concrete examples showing expected relevance scores
+- **User Education**: Detailed explanations help users understand and optimize search results
+
+### Changed
+
+#### 🗄️ Storage System Complete Replacement
+- **Removed**: LanceDB vector database dependency completely eliminated
+- **Replaced**: Simple JSON file storage with category-based directory organization
+- **File Structure**: `{workingDirectory}/.agentic-tools-mcp/memories/{category}/{sanitized_title}.json`
+- **Performance**: Faster file system operations replace complex vector computations
+- **Simplicity**: Human-readable JSON files replace binary vector database files
+- **Portability**: Memory data easily portable and version-controllable
+
+#### 🔧 Tool Interface Modernization
+- **create_memory**: Now requires both `title` and `content` parameters
+- **update_memory**: Can update `title`, `content`, metadata, and category independently
+- **search_memories**: Enhanced with multi-field search and relevance scoring
+- **All Tools**: Removed `agentId`, `importance`, and `embedding` parameters (simplified schema)
+- **Validation**: Improved error messages with specific guidance and examples
+
+#### 📚 Documentation Complete Rewrite
+- **AGENT_MEMORIES.md**: Completely rewritten with new architecture and search scoring details
+- **QUICK_START_MEMORIES.md**: Updated with title/content examples and search optimization tips
+- **README.md**: Updated feature descriptions and architectural information
+- **Search Scoring**: New comprehensive section explaining relevance algorithm
+- **Optimization Guide**: Best practices for memory structure and searchability
+
+### Removed
+
+#### 🗑️ Vector Database Dependencies
+- **Removed**: `@lancedb/lancedb` dependency (vector database)
+- **Removed**: `natural` dependency (TF-IDF processing)
+- **Removed**: `svd-js` dependency (singular value decomposition)
+- **Removed**: All embedding generation and vector similarity code
+- **Removed**: Complex semantic search infrastructure
+
+#### 🧹 Simplified Schema
+- **Removed**: `agentId` field from memory interface (simplified multi-agent support)
+- **Removed**: `importance` field (1-10 scoring system eliminated)
+- **Removed**: `embedding` field (vector representations no longer needed)
+- **Removed**: `minImportance` parameter from search operations
+- **Simplified**: Memory interface now focuses on essential fields only
+
+### Fixed
+
+#### 🐛 Cross-Platform File Path Handling
+- **Fixed**: Path duplication issue in `resolveFileNameConflict` method
+- **Root Cause**: String replacement using Unix-style separators failed on Windows
+- **Solution**: Proper cross-platform path manipulation using Node.js path methods
+- **Impact**: Memory creation now works reliably on all operating systems
+- **Testing**: Verified fix resolves file path duplication errors
+
+#### 🔍 Enhanced Search Implementation
+- **Fixed**: Search now properly covers title field (was missing in previous implementation)
+- **Enhanced**: Improved relevance scoring with position and frequency weighting
+- **Optimized**: Better search result ranking based on field importance
+- **Performance**: Faster text-based search compared to vector operations
+
+### Technical Details
+
+#### 🏗️ Architecture Changes
+- **Storage**: JSON files replace LanceDB vector database
+- **Search**: Text matching replaces vector similarity search
+- **Validation**: Title length validation replaces content length limits
+- **File Naming**: Sanitized titles replace content-based file naming
+- **Dependencies**: Reduced from 3 external packages to 0 (pure Node.js)
+
+#### 📊 Search Algorithm Specifications
+```javascript
+// Title Score (up to 100% contribution)
+titleScore = (1 - firstMatchPosition / titleLength) * 0.6 + (occurrences / 5) * 0.4
+
+// Content Score (up to 60% contribution)
+contentScore = (1 - firstMatchPosition / contentLength) * 0.3 + (occurrences / 10) * 0.3
+
+// Category Score (fixed 20% bonus)
+categoryScore = 0.2 (if category matches)
+
+// Final Score (capped at 100%)
+finalScore = Math.min(titleScore + contentScore + categoryScore, 1.0)
+```
+
+#### 🎯 Score Interpretation Ranges
+- **80-100%**: Excellent match (early title match with high frequency)
+- **60-79%**: Very good match (strong title or combined matches)
+- **40-59%**: Good match (title at end or strong content match)
+- **20-39%**: Moderate match (content match or category bonus)
+- **10-19%**: Weak match (late content match or low frequency)
+
+### Migration Guide
+
+#### 🔄 Breaking Changes
+- **Memory Creation**: Must now provide separate `title` and `content` fields
+- **Title Validation**: Titles limited to 50 characters (enforced, not truncated)
+- **Removed Fields**: `agentId`, `importance`, and `embedding` no longer supported
+- **Search Results**: Relevance scores now based on text matching, not vector similarity
+
+#### 📋 Migration Steps
+1. **Update Memory Creation**: Add `title` field to all `create_memory` calls
+2. **Review Titles**: Ensure all memory titles are 50 characters or less
+3. **Remove Deprecated Fields**: Remove `agentId`, `importance` from existing code
+4. **Update Search Logic**: Adjust threshold expectations (text-based vs vector-based)
+5. **Test Search**: Verify search results meet expectations with new algorithm
+
+#### 🔧 Compatibility Notes
+- **File Migration**: Existing LanceDB files will be ignored (manual migration required)
+- **Tool Names**: All tool names remain the same (no breaking changes to MCP interface)
+- **Working Directory**: Same storage location pattern maintained
+- **Project Isolation**: Project-specific storage behavior unchanged
+
+### Performance Impact
+
+#### ⚡ Improvements
+- **Faster Search**: Text matching significantly faster than vector operations
+- **Reduced Memory**: No vector embeddings stored (smaller memory footprint)
+- **Simpler Startup**: No vector database initialization required
+- **Cross-Platform**: Better compatibility across different operating systems
+
+#### 📈 Scalability
+- **File System**: Scales well with thousands of memories
+- **Search Speed**: Linear search performance acceptable for typical use cases
+- **Storage Size**: JSON files more space-efficient than vector database
+- **Backup/Restore**: Simple file copying for backup and migration
+
+---
+
 ## [1.3.2] - 2025-05-28
 
 ### Fixed

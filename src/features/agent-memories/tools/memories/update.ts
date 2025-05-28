@@ -10,26 +10,26 @@ import { MemoryStorage } from '../../storage/storage.js';
 export function createUpdateMemoryTool(storage: MemoryStorage) {
   return {
     name: 'update_memory',
-    description: 'Update an existing memory by ID',
+    description: 'Update an existing memory\'s title, content, metadata, or category',
     inputSchema: {
       id: z.string(),
+      title: z.string().optional(),
       content: z.string().optional(),
       metadata: z.record(z.any()).optional(),
-      category: z.string().optional(),
-      importance: z.number().min(1).max(10).optional()
+      category: z.string().optional()
     },
-    handler: async ({ 
-      id, 
-      content, 
-      metadata, 
-      category, 
-      importance 
-    }: { 
-      id: string; 
-      content?: string; 
-      metadata?: Record<string, any>; 
-      category?: string; 
-      importance?: number; 
+    handler: async ({
+      id,
+      title,
+      content,
+      metadata,
+      category
+    }: {
+      id: string;
+      title?: string;
+      content?: string;
+      metadata?: Record<string, any>;
+      category?: string;
     }) => {
       try {
         // Validate inputs
@@ -53,21 +53,18 @@ export function createUpdateMemoryTool(storage: MemoryStorage) {
           };
         }
 
-        if (content && content.trim().length > 10000) {
+        if (title && title.trim().length > 50) {
           return {
             content: [{
               type: 'text' as const,
-              text: 'Error: Memory content must be 10,000 characters or less.'
-            }],
-            isError: true
-          };
-        }
+              text: `Error: Memory title must be 50 characters or less for better file organization. Current length: ${title.trim().length} characters.
 
-        if (importance !== undefined && (importance < 1 || importance > 10)) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Importance must be between 1 and 10.'
+Please provide a short, descriptive title instead. For example:
+- "User prefers dark mode interface"
+- "Project uses TypeScript and React"
+- "Database connection timeout is 30s"
+
+Use the content field for detailed information.`
             }],
             isError: true
           };
@@ -84,11 +81,11 @@ export function createUpdateMemoryTool(storage: MemoryStorage) {
         }
 
         // Check if at least one field is being updated
-        if (content === undefined && metadata === undefined && category === undefined && importance === undefined) {
+        if (title === undefined && content === undefined && metadata === undefined && category === undefined) {
           return {
             content: [{
               type: 'text' as const,
-              text: 'Error: At least one field (content, metadata, category, or importance) must be provided for update.'
+              text: 'Error: At least one field (title, content, metadata, or category) must be provided for update.'
             }],
             isError: true
           };
@@ -112,6 +109,9 @@ The memory with this ID does not exist or may have been deleted.`
 
         // Prepare updates
         const updates: any = {};
+        if (title !== undefined) {
+          updates.title = title.trim();
+        }
         if (content !== undefined) {
           updates.content = content.trim();
         }
@@ -120,9 +120,6 @@ The memory with this ID does not exist or may have been deleted.`
         }
         if (category !== undefined) {
           updates.category = category.trim();
-        }
-        if (importance !== undefined) {
-          updates.importance = importance;
         }
 
         const updatedMemory = await storage.updateMemory(id.trim(), updates);
@@ -143,6 +140,9 @@ The memory could not be updated. Please try again.`
 
         // Show what changed
         const changes: string[] = [];
+        if (title !== undefined && title.trim() !== existingMemory.title) {
+          changes.push('Title');
+        }
         if (content !== undefined && content.trim() !== existingMemory.content) {
           changes.push('Content');
         }
@@ -152,9 +152,6 @@ The memory could not be updated. Please try again.`
         if (category !== undefined && category.trim() !== existingMemory.category) {
           changes.push('Category');
         }
-        if (importance !== undefined && importance !== existingMemory.importance) {
-          changes.push('Importance');
-        }
 
         return {
           content: [{
@@ -163,15 +160,12 @@ The memory could not be updated. Please try again.`
 
 **Memory ID:** ${updatedMemory.id}
 **Updated Fields:** ${changes.join(', ')}
+**Title:** ${updatedMemory.title}
 **Content:** ${updatedMemory.content.substring(0, 200)}${updatedMemory.content.length > 200 ? '...' : ''}
-**Agent ID:** ${updatedMemory.agentId || 'Not specified'}
 **Category:** ${updatedMemory.category || 'Not specified'}
-**Importance:** ${updatedMemory.importance || 'Not specified'}
 **Created:** ${new Date(updatedMemory.createdAt).toLocaleString()}
 **Updated:** ${new Date(updatedMemory.updatedAt).toLocaleString()}
-**Metadata:** ${Object.keys(updatedMemory.metadata).length > 0 ? JSON.stringify(updatedMemory.metadata, null, 2) : 'None'}
-
-${content !== undefined ? 'The embedding has been regenerated for the updated content.' : ''}`
+**Metadata:** ${Object.keys(updatedMemory.metadata).length > 0 ? JSON.stringify(updatedMemory.metadata, null, 2) : 'None'}`
           }]
         };
       } catch (error) {

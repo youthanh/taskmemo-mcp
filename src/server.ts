@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { FileStorage } from './features/task-management/storage/file-storage.js';
-import { LanceDBMemoryStorage } from './features/agent-memories/storage/lancedb-storage.js';
+import { FileStorage as MemoryFileStorage } from './features/agent-memories/storage/file-storage.js';
+import { getVersion } from './utils/version.js';
 import { z } from 'zod';
 
 // Project tools
@@ -44,8 +45,8 @@ async function createStorage(workingDirectory: string): Promise<FileStorage> {
 /**
  * Create memory storage instance for a specific working directory
  */
-async function createMemoryStorage(workingDirectory: string): Promise<LanceDBMemoryStorage> {
-  const storage = new LanceDBMemoryStorage(workingDirectory);
+async function createMemoryStorage(workingDirectory: string): Promise<MemoryFileStorage> {
+  const storage = new MemoryFileStorage(workingDirectory);
   await storage.initialize();
   return storage;
 }
@@ -54,10 +55,10 @@ async function createMemoryStorage(workingDirectory: string): Promise<LanceDBMem
  * Create and configure the MCP server for task management and agent memories
  */
 export async function createServer(): Promise<McpServer> {
-  // Create MCP server
+  // Create MCP server with dynamic version from package.json
   const server = new McpServer({
     name: '@pimzino/agentic-tools-mcp',
-    version: '1.0.0'
+    version: getVersion()
   });
 
   // Register project management tools
@@ -442,29 +443,25 @@ export async function createServer(): Promise<McpServer> {
   // Register agent memory management tools
   server.tool(
     'create_memory',
-    'Create a new memory with automatic embedding generation for semantic search',
+    'Create a new memory with JSON file storage',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
-      content: z.string().describe('The main content/text of the memory to store'),
+      title: z.string().describe('Short title for the memory (max 50 characters for better file organization)'),
+      content: z.string().describe('Detailed memory content/text (no character limit)'),
       metadata: z.record(z.any()).optional().describe('Optional metadata as key-value pairs for additional context'),
-      agentId: z.string().optional().describe('Optional identifier for the agent creating this memory'),
-      category: z.string().optional().describe('Optional category to organize memories (e.g., "user_preferences", "project_context")'),
-      importance: z.number().min(1).max(10).optional().describe('Optional importance score from 1-10, with 10 being most important'),
-      embedding: z.array(z.number()).optional().describe('Optional pre-computed embedding vector (if not provided, will be auto-generated)')
+      category: z.string().optional().describe('Optional category to organize memories (e.g., "user_preferences", "project_context")')
     },
-    async ({ workingDirectory, content, metadata, agentId, category, importance, embedding }: {
+    async ({ workingDirectory, title, content, metadata, category }: {
       workingDirectory: string;
+      title: string;
       content: string;
       metadata?: Record<string, any>;
-      agentId?: string;
       category?: string;
-      importance?: number;
-      embedding?: number[];
     }) => {
       try {
         const storage = await createMemoryStorage(workingDirectory);
         const tool = createCreateMemoryTool(storage);
-        return await tool.handler({ content, metadata, agentId, category, importance, embedding });
+        return await tool.handler({ title, content, metadata, category });
       } catch (error) {
         return {
           content: [{
@@ -479,29 +476,25 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'search_memories',
-    'Search memories using semantic similarity to find relevant content',
+    'Search memories using text content matching to find relevant content',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
-      query: z.string().describe('The search query text to find semantically similar memories'),
+      query: z.string().describe('The search query text to find matching memories'),
       limit: z.number().min(1).max(100).optional().describe('Maximum number of results to return (default: 10)'),
-      threshold: z.number().min(0).max(1).optional().describe('Minimum similarity threshold 0-1 (default: 0.3 for TF-IDF+SVD)'),
-      agentId: z.string().optional().describe('Filter results to memories created by this specific agent'),
-      category: z.string().optional().describe('Filter results to memories in this specific category'),
-      minImportance: z.number().min(1).max(10).optional().describe('Filter results to memories with importance >= this value')
+      threshold: z.number().min(0).max(1).optional().describe('Minimum relevance threshold 0-1 (default: 0.3)'),
+      category: z.string().optional().describe('Filter results to memories in this specific category')
     },
-    async ({ workingDirectory, query, limit, threshold, agentId, category, minImportance }: {
+    async ({ workingDirectory, query, limit, threshold, category }: {
       workingDirectory: string;
       query: string;
       limit?: number;
       threshold?: number;
-      agentId?: string;
       category?: string;
-      minImportance?: number;
     }) => {
       try {
         const storage = await createMemoryStorage(workingDirectory);
         const tool = createSearchMemoriesTool(storage);
-        return await tool.handler({ query, limit, threshold, agentId, category, minImportance });
+        return await tool.handler({ query, limit, threshold, category });
       } catch (error) {
         return {
           content: [{
@@ -540,23 +533,21 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'list_memories',
-    'List memories with optional filtering by agent, category, and limit',
+    'List memories with optional filtering by category and limit',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
-      agentId: z.string().optional().describe('Filter to memories created by this specific agent'),
       category: z.string().optional().describe('Filter to memories in this specific category'),
       limit: z.number().min(1).max(1000).optional().describe('Maximum number of memories to return (default: 50)')
     },
-    async ({ workingDirectory, agentId, category, limit }: {
+    async ({ workingDirectory, category, limit }: {
       workingDirectory: string;
-      agentId?: string;
       category?: string;
       limit?: number;
     }) => {
       try {
         const storage = await createMemoryStorage(workingDirectory);
         const tool = createListMemoriesTool(storage);
-        return await tool.handler({ agentId, category, limit });
+        return await tool.handler({ category, limit });
       } catch (error) {
         return {
           content: [{
@@ -571,27 +562,27 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'update_memory',
-    'Update an existing memory\'s content, metadata, category, or importance (regenerates embeddings if content changes)',
+    'Update an existing memory\'s content, metadata, or category',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the memory to update'),
-      content: z.string().optional().describe('New content for the memory (will regenerate embeddings)'),
+      title: z.string().optional().describe('New title for the memory (max 50 characters for better file organization)'),
+      content: z.string().optional().describe('New detailed content for the memory (no character limit)'),
       metadata: z.record(z.any()).optional().describe('New metadata as key-value pairs (replaces existing metadata)'),
-      category: z.string().optional().describe('New category for organizing the memory'),
-      importance: z.number().min(1).max(10).optional().describe('New importance score from 1-10')
+      category: z.string().optional().describe('New category for organizing the memory')
     },
-    async ({ workingDirectory, id, content, metadata, category, importance }: {
+    async ({ workingDirectory, id, title, content, metadata, category }: {
       workingDirectory: string;
       id: string;
+      title?: string;
       content?: string;
       metadata?: Record<string, any>;
       category?: string;
-      importance?: number;
     }) => {
       try {
         const storage = await createMemoryStorage(workingDirectory);
         const tool = createUpdateMemoryTool(storage);
-        return await tool.handler({ id, content, metadata, category, importance });
+        return await tool.handler({ id, title, content, metadata, category });
       } catch (error) {
         return {
           content: [{

@@ -10,29 +10,23 @@ import { MemoryStorage } from '../../storage/storage.js';
 export function createSearchMemoriesTool(storage: MemoryStorage) {
   return {
     name: 'search_memories',
-    description: 'Search memories by semantic similarity using text or vector queries',
+    description: 'Search memories by text content matching',
     inputSchema: {
       query: z.string(),
       limit: z.number().min(1).max(100).optional(),
       threshold: z.number().min(0).max(1).optional(),
-      agentId: z.string().optional(),
-      category: z.string().optional(),
-      minImportance: z.number().min(1).max(10).optional()
+      category: z.string().optional()
     },
     handler: async ({
       query,
       limit = 10,
       threshold,
-      agentId,
-      category,
-      minImportance
+      category
     }: {
       query: string;
       limit?: number;
       threshold?: number;
-      agentId?: string;
       category?: string;
-      minImportance?: number;
     }) => {
       try {
         // Validate inputs
@@ -76,23 +70,11 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
           };
         }
 
-        if (minImportance !== undefined && (minImportance < 1 || minImportance > 10)) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Minimum importance must be between 1 and 10.'
-            }],
-            isError: true
-          };
-        }
-
         const searchInput = {
           query: query.trim(),
           limit,
           threshold, // Will use config default if undefined
-          agentId: agentId?.trim(),
-          category: category?.trim(),
-          minImportance
+          category: category?.trim()
         };
 
         const results = await storage.searchMemories(searchInput);
@@ -101,12 +83,6 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
         const actualThreshold = threshold ?? (storage as any).config?.defaultThreshold ?? 0.3;
 
         if (results.length === 0) {
-          // Get corpus statistics for better guidance (if available)
-          const corpusStats = storage.getCorpusStatistics?.();
-          const corpusGuidance = corpusStats && corpusStats.corpusSize < 10
-            ? `\n\n💡 **Corpus Size**: ${corpusStats.corpusSize} memories (${corpusStats.quality})\n${corpusStats.recommendation}`
-            : '';
-
           return {
             content: [{
               type: 'text' as const,
@@ -115,12 +91,10 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
 **Query:** "${query}"
 **Threshold:** ${actualThreshold}
 **Filters:** ${[
-                agentId && `Agent: ${agentId}`,
-                category && `Category: ${category}`,
-                minImportance && `Min Importance: ${minImportance}`
-              ].filter(Boolean).join(', ') || 'None'}${corpusGuidance}
+                category && `Category: ${category}`
+              ].filter(Boolean).join(', ') || 'None'}
 
-Try adjusting your search query or lowering the similarity threshold.`
+Try adjusting your search query or using different keywords.`
             }]
           };
         }
@@ -128,11 +102,9 @@ Try adjusting your search query or lowering the similarity threshold.`
         const resultText = results.map((result, index) => {
           const memory = result.memory;
           return `**${index + 1}. Memory ID:** ${memory.id}
-**Similarity Score:** ${(result.score * 100).toFixed(1)}%
+**Relevance Score:** ${(result.score * 100).toFixed(1)}%
 **Content:** ${memory.content.substring(0, 300)}${memory.content.length > 300 ? '...' : ''}
-**Agent ID:** ${memory.agentId || 'Not specified'}
 **Category:** ${memory.category || 'Not specified'}
-**Importance:** ${memory.importance || 'Not specified'}
 **Created:** ${new Date(memory.createdAt).toLocaleString()}
 **Metadata:** ${Object.keys(memory.metadata).length > 0 ? JSON.stringify(memory.metadata, null, 2) : 'None'}`;
         }).join('\n\n---\n\n');
@@ -145,9 +117,7 @@ Try adjusting your search query or lowering the similarity threshold.`
 **Query:** "${query}"
 **Threshold:** ${actualThreshold}
 **Filters:** ${[
-              agentId && `Agent: ${agentId}`,
-              category && `Category: ${category}`,
-              minImportance && `Min Importance: ${minImportance}`
+              category && `Category: ${category}`
             ].filter(Boolean).join(', ') || 'None'}
 
 ${resultText}`

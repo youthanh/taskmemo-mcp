@@ -1,16 +1,15 @@
 # Agent Memories Feature
 
-The Agent Memories feature provides a comprehensive memory system for AI agents using LanceDB vector database. It enables persistent storage, semantic search, and CRUD operations for agent memories with vector-based similarity search capabilities.
+The Agent Memories feature provides a comprehensive memory system for AI agents using JSON file storage. It enables persistent storage, text-based search, and CRUD operations for agent memories with simple file-based organization.
 
 ## Overview
 
 The agent memories system allows AI agents to:
 - Store and retrieve memories with semantic content
-- Perform vector-based similarity searches using LanceDB
-- Organize memories by agent, category, and importance
+- Perform text-based content searches across JSON files
+- Organize memories by category
 - Maintain persistent storage across sessions with project isolation
 - Access rich metadata and timestamps
-- Automatically generate embeddings for semantic search
 - Filter and search memories with flexible criteria
 
 ## Architecture
@@ -31,62 +30,60 @@ src/features/agent-memories/
 ```typescript
 interface Memory {
   id: string;                    // Unique identifier
-  content: string;               // The actual memory content/text
-  embedding?: number[];          // Vector representation (auto-generated)
+  title: string;                 // Short title for file naming (max 50 characters)
+  content: string;               // Detailed memory content/text (no limit)
   metadata: Record<string, any>; // Flexible metadata object
   createdAt: string;            // ISO timestamp
   updatedAt: string;            // ISO timestamp
-  agentId?: string;             // Optional agent identifier
   category?: string;            // Optional categorization
-  importance?: number;          // Optional importance score (1-10)
 }
 ```
 
 ## Storage
 
-- **Database**: LanceDB vector database (v0.19.1)
-- **Location**: `{workingDirectory}/.agentic-tools-mcp/memories/`
-- **Format**: Local file-based storage with vector indexing
-- **Schema**: Optimized for vector search with "vector" column for embeddings
-- **Embedding**: Automatic embedding generation using local embedding function
+- **Format**: Individual JSON files per memory
+- **Location**: `{workingDirectory}/.agentic-tools-mcp/memories/{category}/{sanitized_title}.json`
+- **Organization**: Organized by category in subdirectories
+- **File Naming**: Uses sanitized memory title (max 50 characters)
+- **Schema**: JSON structure with id, title, details (content), category, timestamps
+- **Search**: Text-based content matching across title and content fields
 - **Isolation**: Project-specific storage per working directory
-- **Performance**: Efficient vector similarity search with configurable thresholds
+- **Performance**: Fast file system operations with category-based organization
 - **Persistence**: All data persists across server restarts
 
 ## MCP Tools
 
 ### 1. create_memory
 
-Creates a new memory with automatic embedding generation.
+Creates a new memory with JSON file storage.
 
 **Parameters:**
 - `workingDirectory` (string): Project working directory
-- `content` (string): Memory content text
+- `title` (string): Short title for file naming (max 50 characters)
+- `content` (string): Detailed memory content/text (no character limit)
 - `metadata` (object, optional): Additional metadata
-- `agentId` (string, optional): Agent identifier
 - `category` (string, optional): Memory category
-- `importance` (number, optional): Importance score (1-10)
-- `embedding` (number[], optional): Pre-computed embedding vector
 
 **Example:**
 ```json
 {
   "workingDirectory": "/path/to/project",
-  "content": "User prefers dark mode interface",
+  "title": "User prefers dark mode",
+  "content": "The user has explicitly stated they prefer dark mode interfaces over light mode. This preference was mentioned during the UI discussion and should be applied to all future interface recommendations. They find light mode straining on their eyes, especially during evening work sessions.",
   "metadata": {"source": "user_preference", "confidence": 0.9},
-  "agentId": "assistant-1",
-  "category": "preferences",
-  "importance": 8
+  "category": "preferences"
 }
 ```
 
-### 2. search_memories_Agentic_Tools
+**Note:** Title is limited to 50 characters for clean file naming. Content has no limit and should contain detailed information.
 
-Searches memories using semantic similarity.
+### 2. search_memories
+
+Searches memories using text content matching across both title and content fields.
 
 **Parameters:**
 - `workingDirectory` (string): Project working directory
-- `query` (string): Search query text
+- `query` (string): Search query text (searches both title and content)
 - `limit` (number, optional): Maximum results (default: 10, max: 100)
 - `threshold` (number, optional): Similarity threshold (default: 0.7, range: 0-1)
 - `agentId` (string, optional): Filter by agent ID
@@ -179,14 +176,13 @@ The current implementation uses a simple local embedding function that:
 // Create a memory about user preferences
 await tools.create_memory({
   workingDirectory: "/my/project",
-  content: "User prefers concise responses and technical explanations",
+  title: "User prefers concise technical responses",
+  content: "The user has explicitly stated they prefer concise responses with technical explanations. They value brevity but want detailed technical information when relevant. This preference was noted during multiple conversations and should guide response style.",
   metadata: {
     source: "conversation",
     timestamp: "2024-01-15T10:30:00Z"
   },
-  agentId: "assistant-1",
-  category: "user_preferences",
-  importance: 9
+  category: "user_preferences"
 });
 ```
 
@@ -196,188 +192,210 @@ await tools.create_memory({
 // Search for memories about user preferences
 const results = await tools.search_memories({
   workingDirectory: "/my/project",
-  query: "how does the user like responses",
+  query: "user preferences responses",
   limit: 5,
-  threshold: 0.1,  // Adjusted for basic embeddings
+  threshold: 0.3,  // Text-based search relevance
   category: "user_preferences"
 });
 ```
 
-## 🧠 **Understanding Embeddings & Similarity Scoring**
+## 🔍 **Understanding Text-Based Search**
 
-### **Current Implementation: TF-IDF + SVD (LSA) Embeddings**
+### **Current Implementation: Multi-Field Text Matching**
 
-✅ **Production Quality**: This system uses **TF-IDF + SVD (Latent Semantic Analysis)** embeddings that provide genuine semantic understanding and high-quality similarity scores.
+✅ **Fast & Reliable**: The system uses intelligent text-based content matching across title, content, and category fields with sophisticated relevance scoring.
 
-#### **What Our TF-IDF + SVD Embeddings Do:**
-- **Semantic Understanding**: Captures relationships between "TypeScript" and "JavaScript", "API" and "endpoint"
-- **Technical Content**: Excellent with programming concepts, code patterns, and technical documentation
-- **Term Importance**: Uses TF-IDF to weight important vs common terms appropriately
-- **Latent Topics**: SVD finds hidden semantic topics like "frontend", "backend", "performance"
-- **Cross-Domain Matching**: Connects related concepts across different technical domains
+#### **How Text Search Works:**
+- **Multi-Field Search**: Searches across memory titles, content, and categories
+- **Case Insensitive**: Searches are case-insensitive for better usability
+- **Intelligent Scoring**: Advanced relevance scoring based on field priority, position, and frequency
+- **Category Filtering**: Can filter results by specific categories
+- **Fast Performance**: Optimized text matching with immediate results
+
+#### **Search Fields Priority (Highest to Lowest):**
+1. **Title** (60% weight) - Most important for relevance
+2. **Content** (30% weight) - Secondary importance
+3. **Category** (20% bonus) - Additional relevance boost
 
 #### **Key Advantages:**
-- **Real Semantic Similarity**: Understands that "database optimization" relates to "query performance"
-- **Technical Terminology**: Recognizes relationships in code, APIs, frameworks, and development concepts
-- **Quality Scores**: Produces meaningful similarity scores in the 0.3-0.8 range
-- **Zero External Dependencies**: No API calls required - pure TypeScript implementation
-- **Deterministic Results**: Consistent embeddings for the same content
+- **Intelligent Ranking**: Results ranked by true relevance, not just presence
+- **Fast Performance**: Instant search results with no processing overhead
+- **No Dependencies**: Pure file system operations with no external requirements
+- **Predictable Results**: Clear scoring system you can understand and optimize for
+- **Easy Debugging**: Transparent relevance scores show why results match
 
-### **Similarity Scoring Algorithm**
+### **🎯 Search Threshold Guide**
 
-Our system converts LanceDB's distance scores to similarity percentages:
-
-```typescript
-// Current implementation (v1.3.0+) - Optimized for TF-IDF + SVD
-similarity = Math.exp(-distance * 1.0)
-
-// This provides:
-// - Always positive scores (0.0 to 1.0)
-// - Higher similarity scores for quality embeddings
-// - Realistic similarity percentages (0.3-0.8 range)
-// - Better threshold behavior
-```
-
-### **🎯 Similarity Thresholds Guide**
-
-#### **With TF-IDF + SVD Embeddings (Current Implementation)**
+#### **Text-Based Search Thresholds**
 ```javascript
-// Recommended thresholds for TF-IDF + SVD embeddings
+// Recommended thresholds for text-based search
 const thresholds = {
-  strict: 0.5,       // 50% - Only very similar content
-  moderate: 0.3,     // 30% - Reasonably related content (DEFAULT)
-  loose: 0.2,        // 20% - Broadly related content
-  veryLoose: 0.1     // 10% - Any potential relationship
+  strict: 0.7,       // 70% - High relevance matches
+  moderate: 0.3,     // 30% - Good relevance matches (DEFAULT)
+  loose: 0.1,        // 10% - Any content matches
 };
 
 // Example usage - threshold is optional (defaults to 0.3)
-const results = await search_memories_Agentic_Tools({
+const results = await search_memories({
   query: "user preferences",
   // threshold: 0.3,  // Optional - uses 0.3 default
   limit: 5
 });
 
 // Or specify custom threshold
-const strictResults = await search_memories_Agentic_Tools({
+const strictResults = await search_memories({
   query: "user preferences",
-  threshold: 0.5,   // Stricter similarity requirement
+  threshold: 0.7,   // Stricter relevance requirement
   limit: 5
 });
 ```
 
-#### **Expected Similarity Scores with TF-IDF + SVD:**
-- **50-80%**: Excellent similarity for highly related content
-- **30-50%**: Good similarity for related concepts (default threshold range)
-- **20-30%**: Moderate similarity for loosely related content
-- **< 20%**: Low similarity
+## **🧮 Search Scoring Algorithm**
 
-### **📊 Corpus Size & Quality Guidelines**
+### **How Relevance Scores Are Calculated**
 
-The TF-IDF + SVD implementation's performance scales with corpus size:
+The system calculates relevance scores using a sophisticated multi-factor algorithm:
 
-#### **Corpus Size Recommendations:**
+#### **1. Title Matches (Highest Priority)**
 ```javascript
-// Corpus quality levels based on memory count
-const corpusQuality = {
-  minimal: "< 5 memories",    // Basic functionality only
-  basic: "5-9 memories",      // Limited semantic understanding
-  good: "10-19 memories",     // Meaningful relationships emerge
-  optimal: "20-49 memories",  // Excellent topic discovery
-  excellent: "50+ memories"   // Robust semantic understanding
-};
+if (titleMatch) {
+  titleScore = (1 - firstMatchPosition / titleLength) * 0.6 + (occurrences / 5) * 0.4
+  // 60% weight for position + 40% weight for frequency
+}
 ```
 
-#### **Performance by Corpus Size:**
+**Factors:**
+- **Position Weight (60%)**: Earlier matches score higher
+- **Frequency Weight (40%)**: More occurrences score higher
+- **Maximum Contribution**: Up to 100% of total score
 
-**🔴 Minimal (< 5 memories):**
-- Limited semantic understanding
-- TF-IDF only (SVD not applied)
-- Similarity scores may be less meaningful
-- **Recommendation**: Add more memories for better results
-
-**🟡 Basic (5-9 memories):**
-- Basic semantic relationships
-- SVD begins to work with sufficient vocabulary
-- Some cross-domain matching
-- **Recommendation**: Aim for 10+ memories
-
-**🟢 Good (10-19 memories):**
-- Meaningful semantic relationships
-- Good cross-domain concept matching
-- Reliable similarity scoring
-- **Recommendation**: Excellent for most use cases
-
-**🔵 Optimal (20-49 memories):**
-- Excellent topic discovery
-- Strong semantic understanding
-- Robust similarity scoring
-- **Recommendation**: Ideal for production use
-
-**🟣 Excellent (50+ memories):**
-- Maximum semantic understanding
-- Rich topic modeling
-- Highly accurate similarity scores
-- **Recommendation**: Best possible performance
-
-### **🚀 Further Enhancement Options**
-
-The current TF-IDF + SVD implementation provides excellent semantic understanding. For even better results, consider:
-
-#### **Recommended Embedding Models:**
-1. **OpenAI**: `text-embedding-3-small` or `text-embedding-ada-002`
-2. **Sentence Transformers**: `all-MiniLM-L6-v2` or `all-mpnet-base-v2`
-3. **Cohere**: `embed-english-v3.0`
-4. **Google**: Universal Sentence Encoder
-
-#### **Advanced Embedding Thresholds (with transformer models):**
+#### **2. Content Matches (Medium Priority)**
 ```javascript
-const advancedThresholds = {
-  strict: 0.85,      // 85% - Very high semantic similarity
-  moderate: 0.75,    // 75% - Good semantic similarity
-  loose: 0.65,       // 65% - Moderate semantic similarity
-  veryLoose: 0.50    // 50% - Basic semantic relationship
-};
+if (contentMatch) {
+  contentScore = (1 - firstMatchPosition / contentLength) * 0.3 + (occurrences / 10) * 0.3
+  // 30% weight for position + 30% weight for frequency
+}
 ```
 
-### **🔧 Current vs Advanced Embeddings**
+**Factors:**
+- **Position Weight (30%)**: Earlier matches score higher
+- **Frequency Weight (30%)**: More occurrences score higher (scaled down)
+- **Maximum Contribution**: Up to 60% of total score
 
-**Current TF-IDF + SVD (v1.3.0+):**
-- ✅ Excellent semantic understanding for technical content
-- ✅ Zero external API dependencies
-- ✅ Fast, deterministic, offline-capable
-- ✅ Realistic thresholds (0.2-0.5 range)
-- ✅ Perfect for LLM memory retrieval use cases
+#### **3. Category Matches (Bonus)**
+```javascript
+if (categoryMatch) {
+  categoryScore = 0.2  // Fixed 20% bonus
+}
+```
 
-**Advanced Transformer Models:**
-- 🚀 Even better semantic understanding
-- 🚀 Multilingual support
-- 🚀 Higher similarity scores (0.7-0.9 range)
-- ⚠️ Requires external APIs or large model downloads
-- ⚠️ Higher computational requirements
+**Factors:**
+- **Fixed Bonus**: 20% added to total score
+- **No Position/Frequency**: Category is exact match only
+
+#### **4. Final Score Calculation**
+```javascript
+finalScore = Math.min(titleScore + contentScore + categoryScore, 1.0)
+// Capped at 100% maximum
+```
+
+### **📊 Score Interpretation Guide**
+
+#### **Expected Relevance Scores:**
+- **80-100%**: Excellent match - query appears early in title with high frequency
+- **60-79%**: Very good match - strong title match or title + content match
+- **40-59%**: Good match - title match at end, or strong content match
+- **20-39%**: Moderate match - content match or category bonus
+- **10-19%**: Weak match - late content match or low frequency
+- **< 10%**: Very weak match - barely meets threshold
+
+#### **Real-World Examples:**
+
+**Query: "user preferences"**
+- Title: "User preferences for dark mode" → **~85%** (early title match)
+- Title: "Settings and user preferences" → **~65%** (late title match)
+- Content: "The user preferences include..." → **~25%** (early content match)
+- Category: "user_preferences" → **~20%** (category bonus only)
+
+**Query: "database"**
+- Title: "Database configuration" → **~90%** (early title match)
+- Title: "PostgreSQL database setup" → **~70%** (mid title match)
+- Content: "Configure the database connection..." → **~30%** (early content)
+- Content: "...timeout for database operations" → **~15%** (late content)
+
+### **🎯 Optimizing Your Memories for Better Search**
+
+#### **1. Title Optimization (Highest Impact)**
+```javascript
+// ✅ GOOD: Key terms at the beginning
+title: "Database connection configuration"
+title: "User prefers dark mode interface"
+title: "API rate limiting implementation"
+
+// ❌ AVOID: Key terms at the end
+title: "Configuration for database connection"
+title: "Interface preferences for user (dark mode)"
+title: "Implementation of API rate limiting"
+```
+
+#### **2. Content Structure (Medium Impact)**
+```javascript
+// ✅ GOOD: Important terms early in content
+content: "Database connection timeout is set to 30 seconds. This configuration ensures..."
+
+// ❌ LESS OPTIMAL: Important terms buried
+content: "This configuration ensures optimal performance. The database connection timeout is set to 30 seconds..."
+```
+
+#### **3. Strategic Keyword Repetition**
+```javascript
+// ✅ GOOD: Natural repetition increases relevance
+title: "User authentication system"
+content: "The user authentication system implements JWT tokens. User sessions are managed through authentication middleware..."
+
+// ❌ AVOID: Keyword stuffing
+title: "Authentication authentication auth system"
+```
+
+#### **4. Category Naming Strategy**
+```javascript
+// ✅ GOOD: Use searchable category names
+category: "authentication"  // Searchable
+category: "database"        // Searchable
+category: "user_interface"  // Searchable
+
+// ❌ LESS OPTIMAL: Generic categories
+category: "technical"       // Too broad
+category: "misc"           // Not descriptive
+category: "stuff"          // Not helpful
+```
 
 ### Listing Memories
 
 ```javascript
-// List all memories for a specific agent
+// List all memories
 const memories = await tools.list_memories({
   workingDirectory: "/my/project",
-  agentId: "assistant-1",
   limit: 20
+});
+
+// List memories by category
+const categoryMemories = await tools.list_memories({
+  workingDirectory: "/my/project",
+  category: "user_preferences",
+  limit: 10
 });
 ```
 
 ## Best Practices
 
-1. **Content Quality**: Write clear, descriptive memory content for better search results
-2. **Categorization**: Use consistent categories to organize memories effectively
-3. **Importance Scoring**: Use importance scores (1-10) to prioritize critical memories
+1. **Title Quality**: Write short, descriptive titles (max 50 chars) for clean file organization
+2. **Content Detail**: Use the content field for detailed information without length limits
+3. **Categorization**: Use consistent categories to organize memories effectively
 4. **Metadata**: Include relevant metadata for better filtering and context
 5. **Regular Cleanup**: Periodically review and delete outdated memories
-6. **Search Optimization**: Adjust similarity thresholds based on your use case
-7. **Agent Organization**: Use consistent agent IDs for multi-agent scenarios
-8. **Batch Operations**: Consider batch creation for large memory sets
-9. **Threshold Tuning**: Default 0.3 threshold works well for TF-IDF + SVD (0.7+ for transformer models)
-10. **Content Length**: Keep memory content focused and concise for better embeddings
+6. **Search Optimization**: Adjust relevance thresholds based on your use case
+7. **File Organization**: Keep titles concise but descriptive for readable file structures
 
 ## Error Handling
 

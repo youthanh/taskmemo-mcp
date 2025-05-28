@@ -49,14 +49,12 @@ The memory with this ID does not exist or may have been deleted.`
             text: `📋 Memory Details:
 
 **Memory ID:** ${memory.id}
+**Title:** ${memory.title}
 **Content:** ${memory.content}
-**Agent ID:** ${memory.agentId || 'Not specified'}
 **Category:** ${memory.category || 'Not specified'}
-**Importance:** ${memory.importance || 'Not specified'}
 **Created:** ${new Date(memory.createdAt).toLocaleString()}
 **Updated:** ${new Date(memory.updatedAt).toLocaleString()}
-**Metadata:** ${Object.keys(memory.metadata).length > 0 ? JSON.stringify(memory.metadata, null, 2) : 'None'}
-**Has Embedding:** ${memory.embedding ? 'Yes' : 'No'}${memory.embedding ? ` (${memory.embedding.length} dimensions)` : ''}`
+**Metadata:** ${Object.keys(memory.metadata).length > 0 ? JSON.stringify(memory.metadata, null, 2) : 'None'}`
           }]
         };
       } catch (error) {

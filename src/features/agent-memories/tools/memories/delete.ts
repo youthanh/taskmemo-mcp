@@ -36,7 +36,7 @@ export function createDeleteMemoryTool(storage: MemoryStorage) {
 
 **Memory ID:** ${id}
 
-To delete this memory, you must set the 'confirm' parameter to true. 
+To delete this memory, you must set the 'confirm' parameter to true.
 This action cannot be undone.
 
 **Warning:** Deleting a memory will permanently remove it from the vector database.`
@@ -85,13 +85,12 @@ The memory could not be deleted. Please try again.`
 
 **Deleted Memory Details:**
 • **ID:** ${memory.id}
+• **Title:** ${memory.title}
 • **Content:** ${memory.content.substring(0, 200)}${memory.content.length > 200 ? '...' : ''}
-• **Agent ID:** ${memory.agentId || 'Not specified'}
 • **Category:** ${memory.category || 'Not specified'}
-• **Importance:** ${memory.importance || 'Not specified'}
 • **Created:** ${new Date(memory.createdAt).toLocaleString()}
 
-The memory has been permanently removed from the vector database and cannot be recovered.`
+The memory has been permanently removed from storage and cannot be recovered.`
           }]
         };
       } catch (error) {

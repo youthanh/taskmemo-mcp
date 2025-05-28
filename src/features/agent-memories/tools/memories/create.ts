@@ -14,30 +14,34 @@ export function createCreateMemoryTool(storage: MemoryStorage) {
     name: 'create_memory',
     description: 'Create a new memory in the agent memories system',
     inputSchema: {
+      title: z.string(),
       content: z.string(),
       metadata: z.record(z.any()).optional(),
-      agentId: z.string().optional(),
-      category: z.string().optional(),
-      importance: z.number().min(1).max(10).optional(),
-      embedding: z.array(z.number()).optional()
+      category: z.string().optional()
     },
-    handler: async ({ 
-      content, 
-      metadata = {}, 
-      agentId, 
-      category, 
-      importance,
-      embedding 
-    }: { 
-      content: string; 
-      metadata?: Record<string, any>; 
-      agentId?: string; 
-      category?: string; 
-      importance?: number;
-      embedding?: number[];
+    handler: async ({
+      title,
+      content,
+      metadata = {},
+      category
+    }: {
+      title: string;
+      content: string;
+      metadata?: Record<string, any>;
+      category?: string;
     }) => {
       try {
         // Validate inputs
+        if (!title || title.trim().length === 0) {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: 'Error: Title cannot be empty.'
+            }],
+            isError: true
+          };
+        }
+
         if (!content || content.trim().length === 0) {
           return {
             content: [{
@@ -48,31 +52,18 @@ export function createCreateMemoryTool(storage: MemoryStorage) {
           };
         }
 
-        if (content.trim().length > 10000) {
+        if (title.trim().length > 50) {
           return {
             content: [{
               type: 'text' as const,
-              text: 'Error: Memory content must be 10,000 characters or less.'
-            }],
-            isError: true
-          };
-        }
+              text: `Error: Memory title must be 50 characters or less for better file organization. Current length: ${title.trim().length} characters.
 
-        if (importance !== undefined && (importance < 1 || importance > 10)) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Importance must be between 1 and 10.'
-            }],
-            isError: true
-          };
-        }
+Please provide a short, descriptive title instead. For example:
+- "User prefers dark mode interface"
+- "Project uses TypeScript and React"
+- "Database connection timeout is 30s"
 
-        if (agentId && agentId.trim().length > 100) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Agent ID must be 100 characters or less.'
+Use the content field for detailed information.`
             }],
             isError: true
           };
@@ -91,14 +82,12 @@ export function createCreateMemoryTool(storage: MemoryStorage) {
         const now = new Date().toISOString();
         const memory: Memory = {
           id: randomUUID(),
+          title: title.trim(),
           content: content.trim(),
-          embedding,
           metadata,
           createdAt: now,
           updatedAt: now,
-          agentId: agentId?.trim(),
-          category: category?.trim(),
-          importance
+          category: category?.trim()
         };
 
         const createdMemory = await storage.createMemory(memory);
@@ -109,14 +98,13 @@ export function createCreateMemoryTool(storage: MemoryStorage) {
             text: `✅ Memory created successfully!
 
 **Memory ID:** ${createdMemory.id}
+**Title:** ${createdMemory.title}
 **Content:** ${createdMemory.content.substring(0, 200)}${createdMemory.content.length > 200 ? '...' : ''}
-**Agent ID:** ${createdMemory.agentId || 'Not specified'}
 **Category:** ${createdMemory.category || 'Not specified'}
-**Importance:** ${createdMemory.importance || 'Not specified'}
 **Created:** ${new Date(createdMemory.createdAt).toLocaleString()}
 **Metadata:** ${Object.keys(createdMemory.metadata).length > 0 ? JSON.stringify(createdMemory.metadata, null, 2) : 'None'}
 
-The memory has been stored and is ready for semantic search.`
+The memory has been stored and is ready for text-based search.`
           }]
         };
       } catch (error) {
