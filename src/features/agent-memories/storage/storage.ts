@@ -62,6 +62,17 @@ export interface MemoryStorage {
   deleteMemoriesByAgent(agentId: string): Promise<number>;
 
   /**
+   * Get embedding corpus statistics (if supported)
+   */
+  getCorpusStatistics?(): {
+    corpusSize: number;
+    vocabularySize: number;
+    isInitialized: boolean;
+    quality: 'minimal' | 'basic' | 'good' | 'optimal' | 'excellent';
+    recommendation: string;
+  };
+
+  /**
    * Get memory statistics
    * @returns Promise resolving to statistics object
    */
@@ -71,5 +82,10 @@ export interface MemoryStorage {
     memoriesByCategory: Record<string, number>;
     oldestMemory?: string;
     newestMemory?: string;
+    corpus?: {
+      size: number;
+      quality: string;
+      recommendation: string;
+    };
   }>;
 }

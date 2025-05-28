@@ -103,7 +103,7 @@ export interface MemoryConfig {
  */
 export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
   embeddingDimension: 200, // Optimized for TF-IDF + SVD
-  defaultThreshold: 0.3, // Improved for TF-IDF + SVD embeddings (was 0.1 for basic hash)
+  defaultThreshold: 0.3, // Realistic for TF-IDF + SVD embeddings (0.2-0.5 range recommended)
   defaultLimit: 10,
   autoEmbedding: true,
 };

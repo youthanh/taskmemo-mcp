@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2025-05-28
+
+### Fixed
+
+#### 🎯 Default Threshold Correction
+- **Fixed**: Search tool now correctly uses 0.3 default threshold instead of hardcoded 0.7
+- **Updated**: All documentation examples to use realistic 0.3 threshold
+- **Enhanced**: Search tool displays actual threshold used (config default when not specified)
+- **Improved**: Corpus size recommendations now show when search returns no results
+
+#### 📊 Corpus Statistics Integration
+- **Added**: Corpus quality assessment in search results when no matches found
+- **Added**: Automatic recommendations based on memory count (minimal/basic/good/optimal/excellent)
+- **Enhanced**: Better user guidance for improving semantic search quality
+
+#### 📚 Documentation Updates
+- **Fixed**: All 0.7 threshold references updated to 0.3 across documentation
+- **Updated**: API reference, quick start guide, and troubleshooting sections
+- **Improved**: Corpus size guidelines with specific recommendations
+
+---
+
 ## [1.3.0] - 2025-05-28
 
 ### Added
@@ -173,12 +195,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Rich Metadata**: Flexible metadata system with JSON storage support
 
 #### 🔧 New MCP Tools
-- `create_memory_Agentic_Tools` - Create memories with automatic embedding generation
-- `search_memories_Agentic_Tools` - Semantic similarity search with configurable thresholds
-- `get_memory_Agentic_Tools` - Retrieve specific memories by ID
-- `list_memories_Agentic_Tools` - List memories with filtering by agent, category, limit
-- `update_memory_Agentic_Tools` - Update existing memories (regenerates embeddings if content changes)
-- `delete_memory_Agentic_Tools` - Delete memories with confirmation requirement
+- `create_memory` - Create memories with automatic embedding generation
+- `search_memories` - Semantic similarity search with configurable thresholds
+- `get_memory` - Retrieve specific memories by ID
+- `list_memories` - List memories with filtering by agent, category, limit
+- `update_memory` - Update existing memories (regenerates embeddings if content changes)
+- `delete_memory` - Delete memories with confirmation requirement
 
 #### 📊 Memory Data Model
 - **Memory Interface**: Comprehensive memory structure with content, embeddings, metadata
@@ -264,7 +286,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Task Management System
 - Complete project, task, and subtask management
-- Project-specific storage with `.agentic-tools-mcp/tasks.json`
+- Project-specific storage with `.agentic-tools-mcp/tasks/tasks.json`
 - Comprehensive CRUD operations
 - Git-trackable task data
 - Full MCP integration

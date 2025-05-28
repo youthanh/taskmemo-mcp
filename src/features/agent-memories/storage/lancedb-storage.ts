@@ -19,7 +19,13 @@ const { TfIdf } = natural;
  * - Understands semantic relationships between terms
  * - Captures latent topics and concepts
  * - Works well with technical content and code
- * - Provides meaningful similarity scores (0.3-0.8 range)
+ * - Provides meaningful similarity scores (0.2-0.6 range)
+ *
+ * Corpus Size Recommendations:
+ * - Minimum: 5+ memories for basic functionality
+ * - Good: 10+ memories for meaningful semantic relationships
+ * - Optimal: 20+ memories for excellent topic discovery
+ * - Large: 50+ memories for robust semantic understanding
  *
  * For even better results, consider upgrading to:
  * - OpenAI text-embedding-3-small or text-embedding-ada-002
@@ -98,18 +104,44 @@ class TfIdfSvdEmbeddingFunction {
     if (!this.isInitialized || !this.tfidf) {
       // If not initialized, create a minimal corpus with just this text
       await this.initializeCorpus([text]);
+      // For single document corpus, return a simple normalized vector
+      const words = text.toLowerCase().split(/\s+/);
+      const embedding = new Array(this.dimension).fill(0);
+      words.forEach((word, i) => {
+        const index = i % this.dimension;
+        embedding[index] += 1.0;
+      });
+      const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+      return magnitude > 0 ? embedding.map(x => x / magnitude) : embedding;
     }
 
-    // Create a temporary TF-IDF for this document
-    const tempTfidf = new TfIdf();
-    this.corpus.forEach(doc => tempTfidf.addDocument(doc.toLowerCase()));
-    tempTfidf.addDocument(text.toLowerCase());
+    // Use the existing TF-IDF model to get term frequencies for the new text
+    const words = text.toLowerCase().split(/\s+/);
 
-    // Get TF-IDF vector for the new document
-    const docIndex = this.corpus.length; // Index of the new document
-    const tfidfVector = this.vocabulary.map(term =>
-      tempTfidf.tfidf(term, docIndex)
-    );
+    // Extend vocabulary to include new terms from this document
+    const newTerms = words.filter(word => !this.vocabulary.includes(word));
+    const extendedVocabulary = [...this.vocabulary, ...newTerms];
+
+    const termFreq: Record<string, number> = {};
+    words.forEach(word => {
+      termFreq[word] = (termFreq[word] || 0) + 1;
+    });
+
+    // Calculate TF-IDF vector using the extended vocabulary and consistent IDF calculation
+    // Include the current document in the corpus for IDF calculation
+    const extendedCorpus = [...this.corpus, text.toLowerCase()];
+
+    const tfidfVector = extendedVocabulary.map(term => {
+      const tf = (termFreq[term] || 0) / words.length;
+
+      // Calculate IDF including the current document in the corpus
+      const docsWithTerm = extendedCorpus.filter(doc =>
+        doc.split(/\s+/).includes(term)
+      ).length;
+
+      const idf = docsWithTerm > 0 ? Math.log(extendedCorpus.length / docsWithTerm) : 0;
+      return tf * idf;
+    });
 
     let embedding: number[];
 
@@ -156,13 +188,42 @@ class TfIdfSvdEmbeddingFunction {
   }
 
   /**
-   * Get corpus statistics
+   * Get corpus statistics and recommendations
    */
-  getStats(): { corpusSize: number; vocabularySize: number; isInitialized: boolean } {
+  getStats(): {
+    corpusSize: number;
+    vocabularySize: number;
+    isInitialized: boolean;
+    quality: 'minimal' | 'basic' | 'good' | 'optimal' | 'excellent';
+    recommendation: string;
+  } {
+    const size = this.corpus.length;
+    let quality: 'minimal' | 'basic' | 'good' | 'optimal' | 'excellent';
+    let recommendation: string;
+
+    if (size < 5) {
+      quality = 'minimal';
+      recommendation = 'Add more memories (5+ recommended) for basic semantic understanding';
+    } else if (size < 10) {
+      quality = 'basic';
+      recommendation = 'Add more memories (10+ recommended) for meaningful semantic relationships';
+    } else if (size < 20) {
+      quality = 'good';
+      recommendation = 'Good corpus size. Consider adding more memories (20+) for optimal topic discovery';
+    } else if (size < 50) {
+      quality = 'optimal';
+      recommendation = 'Excellent corpus size for semantic understanding';
+    } else {
+      quality = 'excellent';
+      recommendation = 'Large corpus provides robust semantic understanding';
+    }
+
     return {
-      corpusSize: this.corpus.length,
+      corpusSize: size,
       vocabularySize: this.vocabulary.length,
-      isInitialized: this.isInitialized
+      isInitialized: this.isInitialized,
+      quality,
+      recommendation
     };
   }
 }
@@ -516,13 +577,16 @@ export class LanceDBMemoryStorage implements MemoryStorage {
 
     const results = await query.toArray();
 
-    return results
+    const mappedResults = results
       .map((result: any) => ({
         memory: this.mapResultToMemory(result),
         score: this.convertDistanceToSimilarity(result._distance || 0),
         distance: result._distance || 0,
-      }))
-      .filter(result => result.score >= (input.threshold || this.config.defaultThreshold));
+      }));
+
+    const threshold = input.threshold || this.config.defaultThreshold;
+
+    return mappedResults.filter(result => result.score >= threshold);
   }
 
   /**
@@ -543,6 +607,19 @@ export class LanceDBMemoryStorage implements MemoryStorage {
   }
 
   /**
+   * Get embedding corpus statistics and quality assessment
+   */
+  getCorpusStatistics(): {
+    corpusSize: number;
+    vocabularySize: number;
+    isInitialized: boolean;
+    quality: 'minimal' | 'basic' | 'good' | 'optimal' | 'excellent';
+    recommendation: string;
+  } {
+    return this.embeddingFunction.getStats();
+  }
+
+  /**
    * Get memory statistics
    */
   async getStatistics(): Promise<{
@@ -551,6 +628,11 @@ export class LanceDBMemoryStorage implements MemoryStorage {
     memoriesByCategory: Record<string, number>;
     oldestMemory?: string;
     newestMemory?: string;
+    corpus: {
+      size: number;
+      quality: string;
+      recommendation: string;
+    };
   }> {
     const memories = await this.getMemories();
 
@@ -560,9 +642,21 @@ export class LanceDBMemoryStorage implements MemoryStorage {
       memoriesByCategory: {} as Record<string, number>,
       oldestMemory: undefined as string | undefined,
       newestMemory: undefined as string | undefined,
+      corpus: {
+        size: 0,
+        quality: 'minimal',
+        recommendation: 'Add memories to improve semantic understanding'
+      }
     };
 
     if (memories.length === 0) {
+      // Add corpus statistics even for empty case
+      const corpusStats = this.getCorpusStatistics();
+      stats.corpus = {
+        size: corpusStats.corpusSize,
+        quality: corpusStats.quality,
+        recommendation: corpusStats.recommendation
+      };
       return stats;
     }
 
@@ -590,6 +684,14 @@ export class LanceDBMemoryStorage implements MemoryStorage {
 
     stats.oldestMemory = oldest.createdAt;
     stats.newestMemory = newest.createdAt;
+
+    // Update corpus statistics
+    const corpusStats = this.getCorpusStatistics();
+    stats.corpus = {
+      size: corpusStats.corpusSize,
+      quality: corpusStats.quality,
+      recommendation: corpusStats.recommendation
+    };
 
     return stats;
   }

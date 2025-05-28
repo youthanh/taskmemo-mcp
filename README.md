@@ -45,12 +45,12 @@ A comprehensive Model Context Protocol (MCP) server providing AI assistants with
 - `delete_subtask` - Delete a specific subtask
 
 #### Agent Memory Management
-- `create_memory_Agentic_Tools` - Create a new memory with automatic embedding
-- `search_memories_Agentic_Tools` - Search memories using semantic similarity
-- `get_memory_Agentic_Tools` - Get detailed memory information
-- `list_memories_Agentic_Tools` - List memories with optional filtering
-- `update_memory_Agentic_Tools` - Edit memory content, metadata, or categorization
-- `delete_memory_Agentic_Tools` - Delete a memory (requires confirmation)
+- `create_memory` - Create a new memory with automatic embedding
+- `search_memories` - Search memories using semantic similarity
+- `get_memory` - Get detailed memory information
+- `list_memories` - List memories with optional filtering
+- `update_memory` - Edit memory content, metadata, or categorization
+- `delete_memory` - Delete a memory (requires confirmation)
 
 **Important**: All tools require a `workingDirectory` parameter to specify where the data should be stored. This enables project-specific task and memory management.
 
@@ -226,7 +226,7 @@ npx -y @pimzino/agentic-tools-mcp
 ## Data Storage
 
 - **Project-specific**: Each working directory has its own isolated task and memory data
-- **File-based**: Task data stored in `.agentic-tools-mcp/tasks.json`, memory data in `.agentic-tools-mcp/memories/`
+- **File-based**: Task data stored in `.agentic-tools-mcp/tasks/`, memory data in `.agentic-tools-mcp/memories/`
 - **Git-trackable**: All data can be committed alongside your project code
 - **Persistent**: All data persists between server restarts
 - **Atomic**: All operations are atomic to prevent data corruption
@@ -237,7 +237,8 @@ npx -y @pimzino/agentic-tools-mcp
 ```
 your-project/
 ├── .agentic-tools-mcp/
-│   ├── tasks.json          # Task management data for this project
+│   ├── tasks/              # Task management data for this project
+│   │   └── tasks.json      # Projects, tasks, and subtasks data
 │   └── memories/           # LanceDB vector database for memories
 │       ├── data/
 │       └── metadata/
@@ -312,7 +313,7 @@ src/
 - Check directory permissions
 
 **"Vector search returns no results"** (Agent Memories)
-- Lower the similarity threshold (try 0.5 or 0.3)
+- Default threshold is 0.3 - try lowering to 0.2 or 0.1 if needed
 - Check that embeddings are being generated correctly
 - Verify that the query content is meaningful
 

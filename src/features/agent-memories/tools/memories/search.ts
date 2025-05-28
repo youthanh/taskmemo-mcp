@@ -19,20 +19,20 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
       category: z.string().optional(),
       minImportance: z.number().min(1).max(10).optional()
     },
-    handler: async ({ 
-      query, 
-      limit = 10, 
-      threshold = 0.7, 
-      agentId, 
-      category, 
-      minImportance 
-    }: { 
-      query: string; 
-      limit?: number; 
-      threshold?: number; 
-      agentId?: string; 
-      category?: string; 
-      minImportance?: number; 
+    handler: async ({
+      query,
+      limit = 10,
+      threshold,
+      agentId,
+      category,
+      minImportance
+    }: {
+      query: string;
+      limit?: number;
+      threshold?: number;
+      agentId?: string;
+      category?: string;
+      minImportance?: number;
     }) => {
       try {
         // Validate inputs
@@ -66,7 +66,7 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
           };
         }
 
-        if (threshold < 0 || threshold > 1) {
+        if (threshold !== undefined && (threshold < 0 || threshold > 1)) {
           return {
             content: [{
               type: 'text' as const,
@@ -89,7 +89,7 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
         const searchInput = {
           query: query.trim(),
           limit,
-          threshold,
+          threshold, // Will use config default if undefined
           agentId: agentId?.trim(),
           category: category?.trim(),
           minImportance
@@ -97,19 +97,28 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
 
         const results = await storage.searchMemories(searchInput);
 
+        // Get the actual threshold used (from config if not provided)
+        const actualThreshold = threshold ?? (storage as any).config?.defaultThreshold ?? 0.3;
+
         if (results.length === 0) {
+          // Get corpus statistics for better guidance (if available)
+          const corpusStats = storage.getCorpusStatistics?.();
+          const corpusGuidance = corpusStats && corpusStats.corpusSize < 10
+            ? `\n\n💡 **Corpus Size**: ${corpusStats.corpusSize} memories (${corpusStats.quality})\n${corpusStats.recommendation}`
+            : '';
+
           return {
             content: [{
               type: 'text' as const,
               text: `🔍 No memories found matching your search criteria.
 
 **Query:** "${query}"
-**Threshold:** ${threshold}
+**Threshold:** ${actualThreshold}
 **Filters:** ${[
                 agentId && `Agent: ${agentId}`,
                 category && `Category: ${category}`,
                 minImportance && `Min Importance: ${minImportance}`
-              ].filter(Boolean).join(', ') || 'None'}
+              ].filter(Boolean).join(', ') || 'None'}${corpusGuidance}
 
 Try adjusting your search query or lowering the similarity threshold.`
             }]
@@ -134,7 +143,7 @@ Try adjusting your search query or lowering the similarity threshold.`
             text: `🔍 Found ${results.length} memory(ies) matching your search:
 
 **Query:** "${query}"
-**Threshold:** ${threshold}
+**Threshold:** ${actualThreshold}
 **Filters:** ${[
               agentId && `Agent: ${agentId}`,
               category && `Category: ${category}`,

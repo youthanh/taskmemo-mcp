@@ -21,7 +21,7 @@ npx -y @pimzino/agentic-tools-mcp
 
 ```javascript
 // Create a memory about user preferences
-await create_memory_Agentic_Tools({
+await create_memory({
   workingDirectory: "/path/to/your/project",
   content: "User prefers concise responses and technical explanations",
   agentId: "assistant-1",
@@ -42,7 +42,7 @@ await search_memories_Agentic_Tools({
   workingDirectory: "/path/to/your/project",
   query: "how does the user like responses",
   limit: 5,
-  threshold: 0.7
+  threshold: 0.3
 });
 ```
 
@@ -182,7 +182,8 @@ Memories are stored in your project directory:
 ```
 your-project/
 ├── .agentic-tools-mcp/
-│   ├── tasks.json          # Task management data
+│   ├── tasks/              # Task management data
+│   │   └── tasks.json      # Projects, tasks, and subtasks data
 │   └── memories/           # LanceDB vector database
 │       ├── data/
 │       └── metadata/

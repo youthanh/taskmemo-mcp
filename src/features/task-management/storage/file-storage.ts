@@ -16,7 +16,7 @@ export class FileStorage implements Storage {
 
   constructor(workingDirectory: string) {
     this.workingDirectory = workingDirectory;
-    this.storageDir = join(workingDirectory, '.agentic-tools-mcp');
+    this.storageDir = join(workingDirectory, '.agentic-tools-mcp', 'tasks');
     this.dataFile = join(this.storageDir, 'tasks.json');
     this.data = {
       projects: [],
@@ -37,7 +37,7 @@ export class FileStorage implements Storage {
     }
 
     try {
-      // Ensure .agentic-tools-mcp directory exists
+      // Ensure .agentic-tools-mcp/tasks directory exists
       await fs.mkdir(this.storageDir, { recursive: true });
 
       // Try to load existing data

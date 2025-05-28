@@ -55,7 +55,7 @@ interface Memory {
 
 ## MCP Tools
 
-### 1. create_memory_Agentic_Tools
+### 1. create_memory
 
 Creates a new memory with automatic embedding generation.
 
@@ -149,8 +149,8 @@ The memory system uses the following default configuration:
 
 ```typescript
 {
-  embeddingDimension: 384,     // Vector dimension (optimized for performance)
-  defaultThreshold: 0.7,       // Default similarity threshold (0-1)
+  embeddingDimension: 200,     // Vector dimension (optimized for TF-IDF + SVD)
+  defaultThreshold: 0.3,       // Default similarity threshold (0-1)
   defaultLimit: 10,            // Default search limit
   autoEmbedding: true          // Auto-generate embeddings from content
 }
@@ -177,7 +177,7 @@ The current implementation uses a simple local embedding function that:
 
 ```javascript
 // Create a memory about user preferences
-await tools.create_memory_Agentic_Tools({
+await tools.create_memory({
   workingDirectory: "/my/project",
   content: "User prefers concise responses and technical explanations",
   metadata: {
@@ -194,7 +194,7 @@ await tools.create_memory_Agentic_Tools({
 
 ```javascript
 // Search for memories about user preferences
-const results = await tools.search_memories_Agentic_Tools({
+const results = await tools.search_memories({
   workingDirectory: "/my/project",
   query: "how does the user like responses",
   limit: 5,
@@ -245,24 +245,79 @@ similarity = Math.exp(-distance * 1.0)
 // Recommended thresholds for TF-IDF + SVD embeddings
 const thresholds = {
   strict: 0.5,       // 50% - Only very similar content
-  moderate: 0.3,     // 30% - Reasonably related content (default)
+  moderate: 0.3,     // 30% - Reasonably related content (DEFAULT)
   loose: 0.2,        // 20% - Broadly related content
   veryLoose: 0.1     // 10% - Any potential relationship
 };
 
-// Example usage
+// Example usage - threshold is optional (defaults to 0.3)
 const results = await search_memories_Agentic_Tools({
   query: "user preferences",
-  threshold: 0.3,   // Use 30% for moderate similarity (default)
+  // threshold: 0.3,  // Optional - uses 0.3 default
+  limit: 5
+});
+
+// Or specify custom threshold
+const strictResults = await search_memories_Agentic_Tools({
+  query: "user preferences",
+  threshold: 0.5,   // Stricter similarity requirement
   limit: 5
 });
 ```
 
 #### **Expected Similarity Scores with TF-IDF + SVD:**
 - **50-80%**: Excellent similarity for highly related content
-- **30-50%**: Good similarity for related concepts
+- **30-50%**: Good similarity for related concepts (default threshold range)
 - **20-30%**: Moderate similarity for loosely related content
 - **< 20%**: Low similarity
+
+### **📊 Corpus Size & Quality Guidelines**
+
+The TF-IDF + SVD implementation's performance scales with corpus size:
+
+#### **Corpus Size Recommendations:**
+```javascript
+// Corpus quality levels based on memory count
+const corpusQuality = {
+  minimal: "< 5 memories",    // Basic functionality only
+  basic: "5-9 memories",      // Limited semantic understanding
+  good: "10-19 memories",     // Meaningful relationships emerge
+  optimal: "20-49 memories",  // Excellent topic discovery
+  excellent: "50+ memories"   // Robust semantic understanding
+};
+```
+
+#### **Performance by Corpus Size:**
+
+**🔴 Minimal (< 5 memories):**
+- Limited semantic understanding
+- TF-IDF only (SVD not applied)
+- Similarity scores may be less meaningful
+- **Recommendation**: Add more memories for better results
+
+**🟡 Basic (5-9 memories):**
+- Basic semantic relationships
+- SVD begins to work with sufficient vocabulary
+- Some cross-domain matching
+- **Recommendation**: Aim for 10+ memories
+
+**🟢 Good (10-19 memories):**
+- Meaningful semantic relationships
+- Good cross-domain concept matching
+- Reliable similarity scoring
+- **Recommendation**: Excellent for most use cases
+
+**🔵 Optimal (20-49 memories):**
+- Excellent topic discovery
+- Strong semantic understanding
+- Robust similarity scoring
+- **Recommendation**: Ideal for production use
+
+**🟣 Excellent (50+ memories):**
+- Maximum semantic understanding
+- Rich topic modeling
+- Highly accurate similarity scores
+- **Recommendation**: Best possible performance
 
 ### **🚀 Further Enhancement Options**
 
@@ -304,7 +359,7 @@ const advancedThresholds = {
 
 ```javascript
 // List all memories for a specific agent
-const memories = await tools.list_memories_Agentic_Tools({
+const memories = await tools.list_memories({
   workingDirectory: "/my/project",
   agentId: "assistant-1",
   limit: 20
@@ -321,7 +376,7 @@ const memories = await tools.list_memories_Agentic_Tools({
 6. **Search Optimization**: Adjust similarity thresholds based on your use case
 7. **Agent Organization**: Use consistent agent IDs for multi-agent scenarios
 8. **Batch Operations**: Consider batch creation for large memory sets
-9. **Threshold Tuning**: Start with 0.3 threshold for TF-IDF + SVD embeddings (0.7+ for transformer models)
+9. **Threshold Tuning**: Default 0.3 threshold works well for TF-IDF + SVD (0.7+ for transformer models)
 10. **Content Length**: Keep memory content focused and concise for better embeddings
 
 ## Error Handling
@@ -360,11 +415,11 @@ The system provides comprehensive error handling for:
 - Check that the working directory exists and is writable
 
 **"Vector search returns no results"**
+- Check corpus size - you may need more memories (10+ recommended for good results)
 - Lower the similarity threshold (try 0.2, 0.1, or 0.05 for TF-IDF + SVD)
-- Check that embeddings are being generated correctly
-- Verify that the query content is meaningful
-- Ensure sufficient corpus size for SVD (falls back to TF-IDF gracefully)
-- Remember: TF-IDF + SVD provides much better thresholds than basic hash embeddings
+- Verify that the query content is meaningful and matches your memory topics
+- Ensure sufficient corpus size for optimal SVD performance (falls back to TF-IDF gracefully)
+- Default threshold is 0.3 - much more realistic than previous 0.1 with hash embeddings
 
 **"Memory not found"**
 - Verify the memory ID is correct
@@ -380,14 +435,14 @@ The agent memories feature integrates seamlessly with existing MCP tools and fol
 ```javascript
 // Use with task management
 const project = await create_project({...});
-await create_memory_Agentic_Tools({
+await create_memory({
   content: `Working on project: ${project.name}`,
   category: "project_context",
   metadata: { projectId: project.id }
 });
 
 // Cross-reference memories with tasks
-const memories = await search_memories_Agentic_Tools({
+const memories = await search_memories({
   query: "project requirements",
   category: "project_context"
 });

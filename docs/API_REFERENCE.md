@@ -203,7 +203,7 @@ Search memories using semantic similarity.
 - `workingDirectory` (string, required): Project working directory
 - `query` (string, required): Search query text (max 1,000 chars)
 - `limit` (number, optional): Maximum results (1-100, default: 10)
-- `threshold` (number, optional): Similarity threshold (0-1, default: 0.7)
+- `threshold` (number, optional): Similarity threshold (0-1, default: 0.3)
 - `agentId` (string, optional): Filter by agent ID
 - `category` (string, optional): Filter by category
 - `minImportance` (number, optional): Minimum importance filter (1-10)
@@ -216,7 +216,7 @@ Search memories using semantic similarity.
   "workingDirectory": "/my/project",
   "query": "user interface preferences",
   "limit": 5,
-  "threshold": 0.8,
+  "threshold": 0.4,
   "category": "preferences"
 }
 ```
