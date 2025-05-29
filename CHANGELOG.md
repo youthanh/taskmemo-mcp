@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-01-27
+
+### 🚀 Enhanced MCP Tool Descriptions
+
+This release significantly improves the user experience by transforming all MCP tool descriptions from basic functional statements into compelling, informative descriptions that highlight value propositions, use cases, and unique features.
+
+### Changed
+
+#### 📝 Complete Tool Description Enhancement (21 Tools)
+- **Project Management Tools** (5 tools): Enhanced descriptions emphasizing project organization, portfolio management, and Git-trackable features
+- **Task Management Tools** (5 tools): Improved descriptions focusing on productivity, hierarchical organization, and workflow management
+- **Subtask Management Tools** (5 tools): Enhanced descriptions highlighting granular progress tracking and detailed work breakdown
+- **Agent Memory Management Tools** (6 tools): Upgraded descriptions emphasizing intelligent storage, search capabilities, and knowledge building
+
+#### 🎯 Description Enhancement Strategy
+- **Action-Oriented Language**: Started descriptions with compelling action verbs (Discover, Launch, Transform, Capture, etc.)
+- **Value Propositions**: Added clear benefits and specific use cases for each tool
+- **Unique Feature Highlighting**: Emphasized key differentiators like project-specific storage, Git-trackable data, and hierarchical organization
+- **Professional Tone**: Maintained technical accuracy while making descriptions more engaging and accessible
+- **Consistent Structure**: Applied uniform enhancement patterns across all tool categories
+
+#### 🌟 Key Features Highlighted
+- **Project-Specific Storage**: Each working directory has isolated data management
+- **Git-Trackable Data**: Task and memory data can be committed alongside code
+- **Hierarchical Organization**: Clear Projects → Tasks → Subtasks structure
+- **Intelligent Search**: Advanced text matching with relevance scoring for memories
+- **Confirmation Safeguards**: Built-in protection against accidental deletions
+- **File-Based Storage**: Simple, reliable JSON file storage system
+
+### Examples of Improvements
+
+#### Before vs After Examples
+- **Before**: "List all projects in the current working directory"
+- **After**: "Discover and overview all your projects with comprehensive details and progress insights. Perfect for getting a bird's-eye view of your work portfolio, tracking project status, and quickly navigating between different initiatives in your workspace with project-specific storage."
+
+- **Before**: "Create a new memory with JSON file storage"
+- **After**: "Capture and preserve important information, insights, or context as searchable memories with intelligent file-based storage. Ideal for building a knowledge base of user preferences, technical decisions, project context, or any information you want to remember and retrieve later with organized categorization."
+
+- **Before**: "Search memories using text content matching to find relevant content"
+- **After**: "Intelligently search through your stored memories using advanced text matching algorithms to quickly find relevant information. Features multi-field search across titles, content, and metadata with customizable relevance scoring - perfect for retrieving past decisions, preferences, or contextual information when you need it most."
+
+### Benefits
+
+#### 🎯 Improved User Experience
+- **Better Understanding**: Users can quickly grasp the value and purpose of each tool
+- **Enhanced Discoverability**: More descriptive language helps users find the right tool for their needs
+- **Professional Appeal**: Enhanced descriptions make the MCP server more attractive to potential users
+- **Clear Use Cases**: Specific scenarios help users understand when and how to use each tool
+- **Feature Awareness**: Users learn about unique capabilities like project-specific storage and Git integration
+
+#### 📈 Technical Accuracy Maintained
+- **Functionality Preserved**: All existing tool functionality remains unchanged
+- **Parameter Descriptions**: All parameter descriptions and validation remain intact
+- **API Compatibility**: No breaking changes to the MCP interface
+- **Documentation Alignment**: Enhanced descriptions align with existing documentation
+
+---
+
 ## [1.4.0] - 2025-05-29
 
 ### 🚀 MAJOR: Memory System Architecture Overhaul

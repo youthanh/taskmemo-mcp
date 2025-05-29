@@ -64,7 +64,7 @@ export async function createServer(): Promise<McpServer> {
   // Register project management tools
   server.tool(
     'list_projects',
-    'List all projects in the current working directory',
+    'Discover and overview all your projects with comprehensive details and progress insights. Perfect for getting a bird\'s-eye view of your work portfolio, tracking project status, and quickly navigating between different initiatives in your workspace with project-specific storage.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.')
     },
@@ -87,7 +87,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'create_project',
-    'Create a new project with a name and description',
+    'Launch new projects with structured organization and detailed documentation. Establishes a solid foundation for task management with Git-trackable project data, enabling seamless collaboration and progress tracking across your development workflow.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where project data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       name: z.string().describe('The name of the new project'),
@@ -112,7 +112,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'get_project',
-    'Retrieve detailed information about a specific project by its ID',
+    'Access comprehensive project details including metadata, creation dates, and current status. Essential for project analysis, reporting, and understanding project context when planning tasks or reviewing progress in your development workflow.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the project to retrieve')
@@ -136,7 +136,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'update_project',
-    'Update an existing project\'s name and/or description',
+    'Evolve and refine your project information as requirements change and scope develops. Maintain accurate project documentation with flexible updates to names and descriptions, ensuring your project data stays current and meaningful throughout the development lifecycle.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the project to update'),
@@ -162,7 +162,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'delete_project',
-    'Delete a project permanently (requires explicit confirmation to prevent accidental deletion)',
+    'Safely remove completed or obsolete projects from your workspace with built-in confirmation safeguards. Permanently cleans up project data while protecting against accidental deletions, helping maintain an organized and current project portfolio.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the project to delete'),
@@ -188,7 +188,7 @@ export async function createServer(): Promise<McpServer> {
   // Register task management tools
   server.tool(
     'list_tasks',
-    'List all tasks, optionally filtered by project ID',
+    'Explore and organize your task portfolio with intelligent filtering and comprehensive progress tracking. View all tasks across projects or focus on specific project tasks, perfect for sprint planning, progress reviews, and maintaining productivity momentum.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       projectId: z.string().optional().describe('Filter tasks to only those belonging to this project (optional)')
@@ -212,7 +212,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'create_task',
-    'Create a new task within a specific project',
+    'Transform project goals into actionable, trackable tasks with detailed specifications and hierarchical organization. Build structured workflows that break down complex projects into manageable components, enabling clear progress tracking and team coordination.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where task data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       name: z.string().describe('The name/title of the new task'),
@@ -238,7 +238,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'get_task',
-    'Retrieve detailed information about a specific task by its ID',
+    'Deep-dive into task specifics with comprehensive details including progress status, creation history, and full context. Essential for task analysis, status reporting, and understanding dependencies when planning work or conducting progress reviews.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the task to retrieve')
@@ -262,7 +262,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'update_task',
-    'Update an existing task\'s name, details, and/or completion status',
+    'Adapt and refine tasks as work progresses with flexible updates to specifications, descriptions, and completion status. Keep your workflow current and accurate, enabling dynamic project management that responds to changing requirements and discoveries.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the task to update'),
@@ -289,7 +289,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'delete_task',
-    'Delete a task permanently (requires explicit confirmation to prevent accidental deletion)',
+    'Streamline your workflow by safely removing obsolete or completed tasks with built-in confirmation protection. Maintain a clean, focused task environment while preventing accidental data loss through required confirmation safeguards.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the task to delete'),
@@ -315,7 +315,7 @@ export async function createServer(): Promise<McpServer> {
   // Register subtask management tools
   server.tool(
     'list_subtasks',
-    'List all subtasks, optionally filtered by task ID or project ID',
+    'Navigate your detailed work breakdown with granular subtask visibility and flexible filtering options. Perfect for sprint planning, daily standups, and detailed progress tracking across the complete project hierarchy from high-level goals to specific implementation steps.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       taskId: z.string().optional().describe('Filter subtasks to only those belonging to this task (optional)'),
@@ -340,7 +340,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'create_subtask',
-    'Create a new subtask within a specific task',
+    'Break down complex tasks into precise, actionable subtasks with detailed specifications and clear ownership. Enable granular progress tracking and team coordination by decomposing work into manageable, measurable components within your hierarchical project structure.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       name: z.string().describe('The name/title of the new subtask'),
@@ -366,7 +366,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'get_subtask',
-    'Retrieve detailed information about a specific subtask by its ID',
+    'Examine subtask details with comprehensive context including parent task relationships, progress status, and implementation specifics. Essential for detailed work planning, progress assessment, and understanding the complete scope of granular work items.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the subtask to retrieve')
@@ -390,7 +390,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'update_subtask',
-    'Update an existing subtask\'s name, details, and/or completion status',
+    'Fine-tune subtask specifications and track completion progress with flexible updates to names, descriptions, and status. Maintain accurate, up-to-date work records that reflect evolving requirements and real-time progress in your detailed project execution.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the subtask to update'),
@@ -417,7 +417,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'delete_subtask',
-    'Delete a subtask permanently (requires explicit confirmation to prevent accidental deletion)',
+    'Clean up your detailed work breakdown by safely removing completed or obsolete subtasks with confirmation safeguards. Maintain focus on current priorities while preserving data integrity through required confirmation protocols.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the subtask to delete'),
@@ -443,7 +443,7 @@ export async function createServer(): Promise<McpServer> {
   // Register agent memory management tools
   server.tool(
     'create_memory',
-    'Create a new memory with JSON file storage',
+    'Capture and preserve important information, insights, or context as searchable memories with intelligent file-based storage. Ideal for building a knowledge base of user preferences, technical decisions, project context, or any information you want to remember and retrieve later with organized categorization.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       title: z.string().describe('Short title for the memory (max 50 characters for better file organization)'),
@@ -476,7 +476,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'search_memories',
-    'Search memories using text content matching to find relevant content',
+    'Intelligently search through your stored memories using advanced text matching algorithms to quickly find relevant information. Features multi-field search across titles, content, and metadata with customizable relevance scoring - perfect for retrieving past decisions, preferences, or contextual information when you need it most.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       query: z.string().describe('The search query text to find matching memories'),
@@ -509,7 +509,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'get_memory',
-    'Retrieve detailed information about a specific memory by its ID',
+    'Access comprehensive memory details including full content, metadata, creation history, and categorization. Essential for reviewing stored knowledge, understanding context, and retrieving complete information when making decisions or referencing past insights.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the memory to retrieve')
@@ -533,7 +533,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'list_memories',
-    'List memories with optional filtering by category and limit',
+    'Browse and explore your knowledge repository with organized memory listings and flexible category filtering. Perfect for reviewing stored information, discovering patterns in your knowledge base, and maintaining awareness of your accumulated insights and decisions.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       category: z.string().optional().describe('Filter to memories in this specific category'),
@@ -562,7 +562,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'update_memory',
-    'Update an existing memory\'s content, metadata, or category',
+    'Evolve and refine your stored knowledge with flexible updates to content, categorization, and metadata. Keep your memory repository current and accurate as understanding deepens, ensuring your knowledge base remains a reliable source of up-to-date insights and decisions.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the memory to update'),
@@ -597,7 +597,7 @@ export async function createServer(): Promise<McpServer> {
 
   server.tool(
     'delete_memory',
-    'Delete a memory permanently (requires explicit confirmation to prevent accidental deletion)',
+    'Safely remove outdated or irrelevant memories from your knowledge repository with built-in confirmation safeguards. Maintain a clean, focused memory collection while protecting against accidental loss of valuable information through required confirmation protocols.',
     {
       workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
       id: z.string().describe('The unique identifier of the memory to delete'),
