@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { FileStorage } from './features/task-management/storage/file-storage.js';
 import { FileStorage as MemoryFileStorage } from './features/agent-memories/storage/file-storage.js';
 import { getVersion } from './utils/version.js';
+import { StorageConfig, resolveWorkingDirectory, getWorkingDirectoryDescription } from './utils/storage-config.js';
 import { z } from 'zod';
 
 // Project tools
@@ -36,8 +37,9 @@ import { createDeleteMemoryTool } from './features/agent-memories/tools/memories
 /**
  * Create storage instance for a specific working directory
  */
-async function createStorage(workingDirectory: string): Promise<FileStorage> {
-  const storage = new FileStorage(workingDirectory);
+async function createStorage(workingDirectory: string, config: StorageConfig): Promise<FileStorage> {
+  const resolvedDirectory = resolveWorkingDirectory(workingDirectory, config);
+  const storage = new FileStorage(resolvedDirectory);
   await storage.initialize();
   return storage;
 }
@@ -45,8 +47,9 @@ async function createStorage(workingDirectory: string): Promise<FileStorage> {
 /**
  * Create memory storage instance for a specific working directory
  */
-async function createMemoryStorage(workingDirectory: string): Promise<MemoryFileStorage> {
-  const storage = new MemoryFileStorage(workingDirectory);
+async function createMemoryStorage(workingDirectory: string, config: StorageConfig): Promise<MemoryFileStorage> {
+  const resolvedDirectory = resolveWorkingDirectory(workingDirectory, config);
+  const storage = new MemoryFileStorage(resolvedDirectory);
   await storage.initialize();
   return storage;
 }
@@ -54,7 +57,7 @@ async function createMemoryStorage(workingDirectory: string): Promise<MemoryFile
 /**
  * Create and configure the MCP server for task management and agent memories
  */
-export async function createServer(): Promise<McpServer> {
+export async function createServer(config: StorageConfig = { useGlobalDirectory: false }): Promise<McpServer> {
   // Create MCP server with dynamic version from package.json
   const server = new McpServer({
     name: '@pimzino/agentic-tools-mcp',
@@ -66,11 +69,11 @@ export async function createServer(): Promise<McpServer> {
     'list_projects',
     'Discover and overview all your projects with comprehensive details and progress insights. Perfect for getting a bird\'s-eye view of your work portfolio, tracking project status, and quickly navigating between different initiatives in your workspace with project-specific storage.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.')
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config))
     },
     async ({ workingDirectory }: { workingDirectory: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createListProjectsTool(storage);
         return await tool.handler();
       } catch (error) {
@@ -89,13 +92,13 @@ export async function createServer(): Promise<McpServer> {
     'create_project',
     'Launch new projects with structured organization and detailed documentation. Establishes a solid foundation for task management with Git-trackable project data, enabling seamless collaboration and progress tracking across your development workflow.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where project data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       name: z.string().describe('The name of the new project'),
       description: z.string().describe('A detailed description of the project')
     },
     async ({ workingDirectory, name, description }: { workingDirectory: string; name: string; description: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createCreateProjectTool(storage);
         return await tool.handler({ name, description });
       } catch (error) {
@@ -114,12 +117,12 @@ export async function createServer(): Promise<McpServer> {
     'get_project',
     'Access comprehensive project details including metadata, creation dates, and current status. Essential for project analysis, reporting, and understanding project context when planning tasks or reviewing progress in your development workflow.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the project to retrieve')
     },
     async ({ workingDirectory, id }: { workingDirectory: string; id: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createGetProjectTool(storage);
         return await tool.handler({ id });
       } catch (error) {
@@ -138,14 +141,14 @@ export async function createServer(): Promise<McpServer> {
     'update_project',
     'Evolve and refine your project information as requirements change and scope develops. Maintain accurate project documentation with flexible updates to names and descriptions, ensuring your project data stays current and meaningful throughout the development lifecycle.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the project to update'),
       name: z.string().optional().describe('New name for the project (optional)'),
       description: z.string().optional().describe('New description for the project (optional)')
     },
     async ({ workingDirectory, id, name, description }: { workingDirectory: string; id: string; name?: string; description?: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createUpdateProjectTool(storage);
         return await tool.handler({ id, name, description });
       } catch (error) {
@@ -164,13 +167,13 @@ export async function createServer(): Promise<McpServer> {
     'delete_project',
     'Safely remove completed or obsolete projects from your workspace with built-in confirmation safeguards. Permanently cleans up project data while protecting against accidental deletions, helping maintain an organized and current project portfolio.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where project data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the project to delete'),
       confirm: z.boolean().describe('Must be set to true to confirm deletion (safety measure)')
     },
     async ({ workingDirectory, id, confirm }: { workingDirectory: string; id: string; confirm: boolean }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createDeleteProjectTool(storage);
         return await tool.handler({ id, confirm });
       } catch (error) {
@@ -190,12 +193,12 @@ export async function createServer(): Promise<McpServer> {
     'list_tasks',
     'Explore and organize your task portfolio with intelligent filtering and comprehensive progress tracking. View all tasks across projects or focus on specific project tasks, perfect for sprint planning, progress reviews, and maintaining productivity momentum.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       projectId: z.string().optional().describe('Filter tasks to only those belonging to this project (optional)')
     },
     async ({ workingDirectory, projectId }: { workingDirectory: string; projectId?: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createListTasksTool(storage);
         return await tool.handler({ projectId });
       } catch (error) {
@@ -214,14 +217,14 @@ export async function createServer(): Promise<McpServer> {
     'create_task',
     'Transform project goals into actionable, trackable tasks with detailed specifications and hierarchical organization. Build structured workflows that break down complex projects into manageable components, enabling clear progress tracking and team coordination.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where task data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       name: z.string().describe('The name/title of the new task'),
       details: z.string().describe('Detailed description of what the task involves'),
       projectId: z.string().describe('The ID of the project this task belongs to')
     },
     async ({ workingDirectory, name, details, projectId }: { workingDirectory: string; name: string; details: string; projectId: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createCreateTaskTool(storage);
         return await tool.handler({ name, details, projectId });
       } catch (error) {
@@ -240,12 +243,12 @@ export async function createServer(): Promise<McpServer> {
     'get_task',
     'Deep-dive into task specifics with comprehensive details including progress status, creation history, and full context. Essential for task analysis, status reporting, and understanding dependencies when planning work or conducting progress reviews.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the task to retrieve')
     },
     async ({ workingDirectory, id }: { workingDirectory: string; id: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createGetTaskTool(storage);
         return await tool.handler({ id });
       } catch (error) {
@@ -264,7 +267,7 @@ export async function createServer(): Promise<McpServer> {
     'update_task',
     'Adapt and refine tasks as work progresses with flexible updates to specifications, descriptions, and completion status. Keep your workflow current and accurate, enabling dynamic project management that responds to changing requirements and discoveries.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the task to update'),
       name: z.string().optional().describe('New name/title for the task (optional)'),
       details: z.string().optional().describe('New detailed description for the task (optional)'),
@@ -272,7 +275,7 @@ export async function createServer(): Promise<McpServer> {
     },
     async ({ workingDirectory, id, name, details, completed }: { workingDirectory: string; id: string; name?: string; details?: string; completed?: boolean }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createUpdateTaskTool(storage);
         return await tool.handler({ id, name, details, completed });
       } catch (error) {
@@ -291,13 +294,13 @@ export async function createServer(): Promise<McpServer> {
     'delete_task',
     'Streamline your workflow by safely removing obsolete or completed tasks with built-in confirmation protection. Maintain a clean, focused task environment while preventing accidental data loss through required confirmation safeguards.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where task data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the task to delete'),
       confirm: z.boolean().describe('Must be set to true to confirm deletion (safety measure)')
     },
     async ({ workingDirectory, id, confirm }: { workingDirectory: string; id: string; confirm: boolean }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createDeleteTaskTool(storage);
         return await tool.handler({ id, confirm });
       } catch (error) {
@@ -317,13 +320,13 @@ export async function createServer(): Promise<McpServer> {
     'list_subtasks',
     'Navigate your detailed work breakdown with granular subtask visibility and flexible filtering options. Perfect for sprint planning, daily standups, and detailed progress tracking across the complete project hierarchy from high-level goals to specific implementation steps.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       taskId: z.string().optional().describe('Filter subtasks to only those belonging to this task (optional)'),
       projectId: z.string().optional().describe('Filter subtasks to only those in this project (optional)')
     },
     async ({ workingDirectory, taskId, projectId }: { workingDirectory: string; taskId?: string; projectId?: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createListSubtasksTool(storage);
         return await tool.handler({ taskId, projectId });
       } catch (error) {
@@ -342,14 +345,14 @@ export async function createServer(): Promise<McpServer> {
     'create_subtask',
     'Break down complex tasks into precise, actionable subtasks with detailed specifications and clear ownership. Enable granular progress tracking and team coordination by decomposing work into manageable, measurable components within your hierarchical project structure.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       name: z.string().describe('The name/title of the new subtask'),
       details: z.string().describe('Detailed description of what the subtask involves'),
       taskId: z.string().describe('The ID of the parent task this subtask belongs to')
     },
     async ({ workingDirectory, name, details, taskId }: { workingDirectory: string; name: string; details: string; taskId: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createCreateSubtaskTool(storage);
         return await tool.handler({ name, details, taskId });
       } catch (error) {
@@ -368,12 +371,12 @@ export async function createServer(): Promise<McpServer> {
     'get_subtask',
     'Examine subtask details with comprehensive context including parent task relationships, progress status, and implementation specifics. Essential for detailed work planning, progress assessment, and understanding the complete scope of granular work items.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the subtask to retrieve')
     },
     async ({ workingDirectory, id }: { workingDirectory: string; id: string }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createGetSubtaskTool(storage);
         return await tool.handler({ id });
       } catch (error) {
@@ -392,7 +395,7 @@ export async function createServer(): Promise<McpServer> {
     'update_subtask',
     'Fine-tune subtask specifications and track completion progress with flexible updates to names, descriptions, and status. Maintain accurate, up-to-date work records that reflect evolving requirements and real-time progress in your detailed project execution.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the subtask to update'),
       name: z.string().optional().describe('New name/title for the subtask (optional)'),
       details: z.string().optional().describe('New detailed description for the subtask (optional)'),
@@ -400,7 +403,7 @@ export async function createServer(): Promise<McpServer> {
     },
     async ({ workingDirectory, id, name, details, completed }: { workingDirectory: string; id: string; name?: string; details?: string; completed?: boolean }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createUpdateSubtaskTool(storage);
         return await tool.handler({ id, name, details, completed });
       } catch (error) {
@@ -419,13 +422,13 @@ export async function createServer(): Promise<McpServer> {
     'delete_subtask',
     'Clean up your detailed work breakdown by safely removing completed or obsolete subtasks with confirmation safeguards. Maintain focus on current priorities while preserving data integrity through required confirmation protocols.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where subtask data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the subtask to delete'),
       confirm: z.boolean().describe('Must be set to true to confirm deletion (safety measure)')
     },
     async ({ workingDirectory, id, confirm }: { workingDirectory: string; id: string; confirm: boolean }) => {
       try {
-        const storage = await createStorage(workingDirectory);
+        const storage = await createStorage(workingDirectory, config);
         const tool = createDeleteSubtaskTool(storage);
         return await tool.handler({ id, confirm });
       } catch (error) {
@@ -445,7 +448,7 @@ export async function createServer(): Promise<McpServer> {
     'create_memory',
     'Capture and preserve important information, insights, or context as searchable memories with intelligent file-based storage. Ideal for building a knowledge base of user preferences, technical decisions, project context, or any information you want to remember and retrieve later with organized categorization.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where memory data will be stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       title: z.string().describe('Short title for the memory (max 50 characters for better file organization)'),
       content: z.string().describe('Detailed memory content/text (no character limit)'),
       metadata: z.record(z.any()).optional().describe('Optional metadata as key-value pairs for additional context'),
@@ -459,7 +462,7 @@ export async function createServer(): Promise<McpServer> {
       category?: string;
     }) => {
       try {
-        const storage = await createMemoryStorage(workingDirectory);
+        const storage = await createMemoryStorage(workingDirectory, config);
         const tool = createCreateMemoryTool(storage);
         return await tool.handler({ title, content, metadata, category });
       } catch (error) {
@@ -478,7 +481,7 @@ export async function createServer(): Promise<McpServer> {
     'search_memories',
     'Intelligently search through your stored memories using advanced text matching algorithms to quickly find relevant information. Features multi-field search across titles, content, and metadata with customizable relevance scoring - perfect for retrieving past decisions, preferences, or contextual information when you need it most.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       query: z.string().describe('The search query text to find matching memories'),
       limit: z.number().min(1).max(100).optional().describe('Maximum number of results to return (default: 10)'),
       threshold: z.number().min(0).max(1).optional().describe('Minimum relevance threshold 0-1 (default: 0.3)'),
@@ -492,7 +495,7 @@ export async function createServer(): Promise<McpServer> {
       category?: string;
     }) => {
       try {
-        const storage = await createMemoryStorage(workingDirectory);
+        const storage = await createMemoryStorage(workingDirectory, config);
         const tool = createSearchMemoriesTool(storage);
         return await tool.handler({ query, limit, threshold, category });
       } catch (error) {
@@ -511,12 +514,12 @@ export async function createServer(): Promise<McpServer> {
     'get_memory',
     'Access comprehensive memory details including full content, metadata, creation history, and categorization. Essential for reviewing stored knowledge, understanding context, and retrieving complete information when making decisions or referencing past insights.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the memory to retrieve')
     },
     async ({ workingDirectory, id }: { workingDirectory: string; id: string }) => {
       try {
-        const storage = await createMemoryStorage(workingDirectory);
+        const storage = await createMemoryStorage(workingDirectory, config);
         const tool = createGetMemoryTool(storage);
         return await tool.handler({ id });
       } catch (error) {
@@ -535,7 +538,7 @@ export async function createServer(): Promise<McpServer> {
     'list_memories',
     'Browse and explore your knowledge repository with organized memory listings and flexible category filtering. Perfect for reviewing stored information, discovering patterns in your knowledge base, and maintaining awareness of your accumulated insights and decisions.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       category: z.string().optional().describe('Filter to memories in this specific category'),
       limit: z.number().min(1).max(1000).optional().describe('Maximum number of memories to return (default: 50)')
     },
@@ -545,7 +548,7 @@ export async function createServer(): Promise<McpServer> {
       limit?: number;
     }) => {
       try {
-        const storage = await createMemoryStorage(workingDirectory);
+        const storage = await createMemoryStorage(workingDirectory, config);
         const tool = createListMemoriesTool(storage);
         return await tool.handler({ category, limit });
       } catch (error) {
@@ -564,7 +567,7 @@ export async function createServer(): Promise<McpServer> {
     'update_memory',
     'Evolve and refine your stored knowledge with flexible updates to content, categorization, and metadata. Keep your memory repository current and accurate as understanding deepens, ensuring your knowledge base remains a reliable source of up-to-date insights and decisions.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the memory to update'),
       title: z.string().optional().describe('New title for the memory (max 50 characters for better file organization)'),
       content: z.string().optional().describe('New detailed content for the memory (no character limit)'),
@@ -580,7 +583,7 @@ export async function createServer(): Promise<McpServer> {
       category?: string;
     }) => {
       try {
-        const storage = await createMemoryStorage(workingDirectory);
+        const storage = await createMemoryStorage(workingDirectory, config);
         const tool = createUpdateMemoryTool(storage);
         return await tool.handler({ id, title, content, metadata, category });
       } catch (error) {
@@ -599,13 +602,13 @@ export async function createServer(): Promise<McpServer> {
     'delete_memory',
     'Safely remove outdated or irrelevant memories from your knowledge repository with built-in confirmation safeguards. Maintain a clean, focused memory collection while protecting against accidental loss of valuable information through required confirmation protocols.',
     {
-      workingDirectory: z.string().describe('The full absolute path to the working directory where memory data is stored. MUST be an absolute path, never relative. Windows: "C:\\Users\\username\\project" or "D:\\projects\\my-app". Unix/Linux/macOS: "/home/username/project" or "/Users/username/project". Do NOT use: ".", "..", "~", "./folder", "../folder" or any relative paths. Ensure the path exists and is accessible before calling this tool.'),
+      workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
       id: z.string().describe('The unique identifier of the memory to delete'),
       confirm: z.boolean().describe('Must be set to true to confirm deletion (safety measure)')
     },
     async ({ workingDirectory, id, confirm }: { workingDirectory: string; id: string; confirm: boolean }) => {
       try {
-        const storage = await createMemoryStorage(workingDirectory);
+        const storage = await createMemoryStorage(workingDirectory, config);
         const tool = createDeleteMemoryTool(storage);
         return await tool.handler({ id, confirm });
       } catch (error) {
