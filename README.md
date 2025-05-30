@@ -1,6 +1,21 @@
 # Agentic Tools MCP Server
 
+[![npm version](https://badge.fury.io/js/@pimzino%2Fagentic-tools-mcp.svg)](https://badge.fury.io/js/@pimzino%2Fagentic-tools-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/@pimzino/agentic-tools-mcp.svg)](https://www.npmjs.com/package/@pimzino/agentic-tools-mcp)
+[![GitHub stars](https://img.shields.io/github/stars/Pimzino/agentic-tools-mcp.svg)](https://github.com/Pimzino/agentic-tools-mcp/stargazers)
+[![GitHub license](https://img.shields.io/github/license/Pimzino/agentic-tools-mcp.svg)](https://github.com/Pimzino/agentic-tools-mcp/blob/main/LICENSE)
+[![Node.js Version](https://img.shields.io/node/v/@pimzino/agentic-tools-mcp.svg)](https://nodejs.org/)
+
 A comprehensive Model Context Protocol (MCP) server providing AI assistants with powerful **task management** and **agent memories** capabilities with **project-specific storage**.
+
+## 🔗 Ecosystem
+
+This MCP server is part of a complete task and memory management ecosystem:
+
+- **🖥️ [VS Code Extension](https://github.com/Pimzino/agentic-tools-mcp-companion)** - Beautiful GUI interface for managing tasks and memories directly in VS Code
+- **⚡ MCP Server** (this repository) - Command-line tools and API for AI assistants
+
+> **💡 Pro Tip**: Use both together for the ultimate productivity experience! The VS Code extension provides a visual interface while the MCP server enables AI assistant integration.
 
 ## Features
 
@@ -92,6 +107,19 @@ Add to your Claude Desktop configuration:
 3. Restart VS Code
 
 **Features Available**: Task management, agent memories, and text-based search capabilities.
+
+### With VS Code Extension (Recommended)
+For the best user experience, install the [**Agentic Tools MCP Companion**](https://github.com/Pimzino/agentic-tools-mcp-companion) VS Code extension:
+
+1. Clone the companion extension repository
+2. Open it in VS Code and press `F5` to run in development mode
+3. Enjoy a beautiful GUI interface for all task and memory management
+
+**Benefits of using both together:**
+- 🎯 **Visual Task Management**: Hierarchical tree view with drag-and-drop
+- 🧠 **Memory Browser**: Search and organize memories with rich UI
+- 🔄 **Real-time Sync**: Changes in VS Code instantly available to AI assistants
+- 📁 **Project Integration**: Seamlessly integrated with your workspace
 
 ### With Other MCP Clients
 The server uses STDIO transport and can be integrated with any MCP-compatible client:
@@ -326,13 +354,14 @@ src/
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and release notes.
 
-### Current Version: 1.4.0
+### Current Version: 1.5.0
 - ✅ Complete task management system
 - ✅ Agent memories with title/content architecture and JSON file storage
 - ✅ Intelligent multi-field search with relevance scoring
 - ✅ Cross-platform file path handling
 - ✅ Project-specific storage with comprehensive MCP tools
 - ✅ Simplified schema with enhanced documentation
+- ✅ VS Code extension ecosystem integration
 
 ## Acknowledgments
 
@@ -373,6 +402,23 @@ npm run build
 npm start
 ```
 
+## Related Projects
+
+### 🖥️ VS Code Extension
+**[Agentic Tools MCP Companion](https://github.com/Pimzino/agentic-tools-mcp-companion)** - A beautiful VS Code extension that provides a GUI interface for this MCP server.
+
+**Key Features:**
+- 🎯 **Hierarchical Tree View**: Visual project → task → subtask management
+- 🧠 **Memory Browser**: Search and organize memories with rich UI
+- ✏️ **Rich Editors**: Form-based editors for creating and editing tasks/memories
+- 🔄 **Real-time Sync**: 100% compatible with MCP server data
+- 📁 **Workspace Integration**: Seamlessly integrated with VS Code workspaces
+
+**Perfect for:**
+- Developers who prefer visual interfaces
+- Teams collaborating on projects
+- Anyone who wants both AI assistant integration AND a beautiful GUI
+
 ## Support
 
 For issues and questions, please use the GitHub issue tracker.
@@ -386,3 +432,4 @@ For issues and questions, please use the GitHub issue tracker.
 ### Getting Help
 - 🐛 Report bugs via GitHub issues
 - 💡 Request features via GitHub discussions
+- 🖥️ **VS Code Extension Issues**: Report extension-specific issues at [agentic-tools-mcp-companion](https://github.com/Pimzino/agentic-tools-mcp-companion/issues)
