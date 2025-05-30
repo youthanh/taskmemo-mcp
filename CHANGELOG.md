@@ -5,6 +5,94 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-01-27
+
+### 🌐 Global Directory Mode with --claude Flag
+
+This release introduces a new storage mode that enables global data storage for AI assistants that work across multiple projects, particularly useful for Claude Desktop and similar non-project-specific environments.
+
+### Added
+
+#### 🚀 Command-Line Storage Mode Selection
+- **New Flag**: `--claude` command-line parameter for global directory mode
+- **Cross-Platform**: Automatic user directory detection (Windows: `C:\Users\{username}\.agentic-tools-mcp\`, macOS/Linux: `~/.agentic-tools-mcp/`)
+- **Mode Indication**: Clear startup messages showing which storage mode is active
+- **Backward Compatibility**: Default behavior unchanged when flag is not used
+
+#### 🔧 Storage Configuration System
+- **New Module**: `src/utils/storage-config.ts` for centralized storage configuration
+- **Command-Line Parsing**: Robust argument parsing with `parseCommandLineArgs()`
+- **Directory Resolution**: `resolveWorkingDirectory()` function handles mode-specific path resolution
+- **Cross-Platform Support**: `getGlobalStorageDirectory()` with proper OS detection using Node.js `os.homedir()`
+
+#### 📝 Enhanced Parameter Documentation
+- **Dynamic Descriptions**: Tool parameter descriptions now reflect current storage mode
+- **Flag Awareness**: Clear indication when `workingDirectory` parameter is ignored in global mode
+- **User Guidance**: Comprehensive documentation of when and how to use each mode
+
+### Changed
+
+#### 🏗️ Server Architecture Updates
+- **Configuration-Driven**: `createServer()` now accepts `StorageConfig` parameter
+- **Storage Factory Enhancement**: `createStorage()` and `createMemoryStorage()` functions now use configuration-based directory resolution
+- **Tool Registration**: All 21 MCP tools updated to use dynamic parameter descriptions and configuration-aware storage creation
+
+#### 📚 Documentation Enhancements
+- **README.md**: Complete storage modes section with usage examples for both modes
+- **Claude Desktop**: Specific configuration examples for both project-specific and global modes
+- **AugmentCode**: Updated setup instructions with mode selection options
+- **Usage Examples**: Clear guidance on when to use each storage mode
+
+### Technical Details
+
+#### 🔧 Implementation Architecture
+- **Clean Separation**: Storage configuration logic isolated in dedicated utility module
+- **Minimal Changes**: Existing storage classes unchanged, configuration handled at server level
+- **Type Safety**: Full TypeScript support with `StorageConfig` interface
+- **Error Handling**: Comprehensive validation and error messages for directory access
+
+#### 🎯 Storage Mode Behavior
+- **Project-Specific Mode** (default): Data stored in `.agentic-tools-mcp/` within each working directory
+- **Global Directory Mode** (`--claude` flag): All data stored in user's home directory under `.agentic-tools-mcp/`
+- **Parameter Override**: When `--claude` flag is used, `workingDirectory` parameter is ignored
+- **Directory Structure**: Global mode maintains same subdirectory structure (tasks/, memories/)
+
+#### 🌍 Cross-Platform Compatibility
+- **Windows**: `C:\Users\{username}\.agentic-tools-mcp\`
+- **macOS**: `/Users/{username}/.agentic-tools-mcp/`
+- **Linux**: `/home/{username}/.agentic-tools-mcp/`
+- **Automatic Detection**: Uses Node.js `os.homedir()` for reliable cross-platform support
+
+### Use Cases
+
+#### 🎯 When to Use Global Directory Mode (`--claude`)
+- **Claude Desktop**: Non-project-specific AI assistant usage
+- **Cross-Project Work**: Single workspace for tasks and memories spanning multiple projects
+- **Centralized Management**: Unified task and memory management across all work
+- **AI Assistant Integration**: Consistent data access regardless of current working directory
+
+#### 📁 When to Use Project-Specific Mode (default)
+- **Development Projects**: Task and memory data tied to specific codebases
+- **Team Collaboration**: Git-trackable data shared via version control
+- **Project Isolation**: Separate task lists and memories per project
+- **VS Code Extension**: Integrated with workspace-specific development
+
+### Migration and Compatibility
+
+#### ✅ Backward Compatibility
+- **No Breaking Changes**: Existing functionality and API remain unchanged
+- **Default Behavior**: Project-specific mode remains the default
+- **Existing Data**: All existing project-specific data continues to work
+- **Tool Interface**: All MCP tools maintain same interface and behavior
+
+#### 🔄 Migration Path
+- **Gradual Adoption**: Users can choose when to adopt global directory mode
+- **Data Separation**: Global and project-specific data remain completely separate
+- **Easy Switching**: Can switch between modes by adding/removing `--claude` flag
+- **No Data Loss**: Both modes can coexist without conflicts
+
+---
+
 ## [1.5.0] - 2025-01-27
 
 ### 🚀 Enhanced MCP Tool Descriptions

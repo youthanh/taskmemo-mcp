@@ -3,6 +3,7 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createServer } from './server.js';
 import { getVersionString } from './utils/version.js';
+import { parseCommandLineArgs } from './utils/storage-config.js';
 
 /**
  * Main entry point for the MCP task management server
@@ -10,8 +11,11 @@ import { getVersionString } from './utils/version.js';
  */
 async function main() {
   try {
-    // Create the MCP server
-    const server = await createServer();
+    // Parse command-line arguments
+    const storageConfig = parseCommandLineArgs();
+
+    // Create the MCP server with configuration
+    const server = await createServer(storageConfig);
 
     // Create STDIO transport
     const transport = new StdioServerTransport();
@@ -21,6 +25,15 @@ async function main() {
 
     // Log server start (to stderr so it doesn't interfere with MCP communication)
     console.error(`🚀 Agentic Tools MCP Server ${getVersionString()} started successfully`);
+
+    // Show storage mode
+    if (storageConfig.useGlobalDirectory) {
+      console.error('🌐 Global directory mode: Using ~/.agentic-tools-mcp/ for all data storage');
+    } else {
+      console.error('📁 Project-specific mode: Using .agentic-tools-mcp/ within each working directory');
+    }
+    console.error('');
+
     console.error('📋 Task Management features available:');
     console.error('   • Project Management (list, create, get, update, delete)');
     console.error('   • Task Management (list, create, get, update, delete)');

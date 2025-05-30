@@ -83,9 +83,36 @@ npm install -g @pimzino/agentic-tools-mcp
 
 ## Usage
 
-### With Claude Desktop
-Add to your Claude Desktop configuration:
+### Storage Modes
 
+The MCP server supports two storage modes:
+
+#### 📁 Project-Specific Mode (Default)
+Data is stored in `.agentic-tools-mcp/` subdirectories within each project's working directory.
+
+```bash
+npx -y @pimzino/agentic-tools-mcp
+```
+
+#### 🌐 Global Directory Mode
+Use the `--claude` flag to store all data in a standardized global directory:
+- **Windows**: `C:\Users\{username}\.agentic-tools-mcp\`
+- **macOS/Linux**: `~/.agentic-tools-mcp/`
+
+```bash
+npx -y @pimzino/agentic-tools-mcp --claude
+```
+
+**When to use `--claude` flag:**
+- With Claude Desktop client (non-project-specific usage)
+- When you want a single global workspace for all tasks and memories
+- For AI assistants that work across multiple projects
+
+**Note**: When using `--claude` flag, the `workingDirectory` parameter in all tools is ignored and the global directory is used instead.
+
+### With Claude Desktop
+
+#### Project-Specific Mode (Default)
 ```json
 {
   "mcpServers": {
@@ -97,13 +124,34 @@ Add to your Claude Desktop configuration:
 }
 ```
 
+#### Global Directory Mode (Recommended for Claude Desktop)
+```json
+{
+  "mcpServers": {
+    "agentic-tools": {
+      "command": "npx",
+      "args": ["-y", "@pimzino/agentic-tools-mcp", "--claude"]
+    }
+  }
+}
+```
+
 **Note**: The server now includes both task management and agent memories features.
 
 ### With AugmentCode
+
+#### Project-Specific Mode (Default)
 1. Open Augment Settings Panel (gear icon)
 2. Add MCP server:
    - **Name**: `agentic-tools`
    - **Command**: `npx -y @pimzino/agentic-tools-mcp`
+3. Restart VS Code
+
+#### Global Directory Mode
+1. Open Augment Settings Panel (gear icon)
+2. Add MCP server:
+   - **Name**: `agentic-tools`
+   - **Command**: `npx -y @pimzino/agentic-tools-mcp --claude`
 3. Restart VS Code
 
 **Features Available**: Task management, agent memories, and text-based search capabilities.
@@ -124,8 +172,14 @@ For the best user experience, install the [**Agentic Tools MCP Companion**](http
 ### With Other MCP Clients
 The server uses STDIO transport and can be integrated with any MCP-compatible client:
 
+#### Project-Specific Mode
 ```bash
 npx -y @pimzino/agentic-tools-mcp
+```
+
+#### Global Directory Mode
+```bash
+npx -y @pimzino/agentic-tools-mcp --claude
 ```
 
 ## Data Models
@@ -278,9 +332,11 @@ your-project/
 
 ### Working Directory Parameter
 All MCP tools require a `workingDirectory` parameter that specifies:
-- Where to store the `.agentic-tools-mcp/` folder
+- Where to store the `.agentic-tools-mcp/` folder (in project-specific mode)
 - Which project's task and memory data to access
 - Enables multiple projects to have separate task lists and memory stores
+
+**Note**: When the server is started with the `--claude` flag, the `workingDirectory` parameter is ignored and a global user directory is used instead (`~/.agentic-tools-mcp/` on macOS/Linux or `C:\Users\{username}\.agentic-tools-mcp\` on Windows).
 
 ### Benefits of Project-Specific Storage
 - **Git Integration**: Task and memory data can be committed with your code
@@ -354,12 +410,14 @@ src/
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and release notes.
 
-### Current Version: 1.5.0
+### Current Version: 1.6.0
 - ✅ Complete task management system
 - ✅ Agent memories with title/content architecture and JSON file storage
 - ✅ Intelligent multi-field search with relevance scoring
 - ✅ Cross-platform file path handling
 - ✅ Project-specific storage with comprehensive MCP tools
+- ✅ Global directory mode with --claude flag for Claude Desktop
+- ✅ Dual storage modes: project-specific and global user directory
 - ✅ Simplified schema with enhanced documentation
 - ✅ VS Code extension ecosystem integration
 
