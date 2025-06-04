@@ -10,14 +10,33 @@ import { Storage } from '../../storage/storage.js';
 export function createUpdateTaskTool(storage: Storage) {
   return {
     name: 'update_task',
-    description: 'Update the name, details, and/or completion status of an existing task',
+    description: 'Update task properties including name, details, completion status, dependencies, priority, complexity, status, tags, and time estimates',
     inputSchema: {
       id: z.string(),
       name: z.string().optional(),
       details: z.string().optional(),
-      completed: z.boolean().optional()
+      completed: z.boolean().optional(),
+      dependsOn: z.array(z.string()).optional(),
+      priority: z.number().min(1).max(10).optional(),
+      complexity: z.number().min(1).max(10).optional(),
+      status: z.enum(['pending', 'in-progress', 'blocked', 'done']).optional(),
+      tags: z.array(z.string()).optional(),
+      estimatedHours: z.number().min(0).optional(),
+      actualHours: z.number().min(0).optional()
     },
-    handler: async ({ id, name, details, completed }: { id: string; name?: string; details?: string; completed?: boolean }) => {
+    handler: async ({ id, name, details, completed, dependsOn, priority, complexity, status, tags, estimatedHours, actualHours }: {
+      id: string;
+      name?: string;
+      details?: string;
+      completed?: boolean;
+      dependsOn?: string[];
+      priority?: number;
+      complexity?: number;
+      status?: 'pending' | 'in-progress' | 'blocked' | 'done';
+      tags?: string[];
+      estimatedHours?: number;
+      actualHours?: number;
+    }) => {
       try {
         // Validate inputs
         if (!id || id.trim().length === 0) {
@@ -70,11 +89,14 @@ export function createUpdateTaskTool(storage: Storage) {
           };
         }
 
-        if (name === undefined && details === undefined && completed === undefined) {
+        if (name === undefined && details === undefined && completed === undefined &&
+            dependsOn === undefined && priority === undefined && complexity === undefined &&
+            status === undefined && tags === undefined && estimatedHours === undefined &&
+            actualHours === undefined) {
           return {
             content: [{
               type: 'text' as const,
-              text: 'Error: At least one field (name, details, or completed) must be provided for update.'
+              text: 'Error: At least one field must be provided for update.'
             }],
             isError: true
           };
@@ -108,6 +130,31 @@ export function createUpdateTaskTool(storage: Storage) {
           }
         }
 
+        // Validate dependencies exist if provided
+        if (dependsOn && dependsOn.length > 0) {
+          for (const depId of dependsOn) {
+            if (depId === id) {
+              return {
+                content: [{
+                  type: 'text' as const,
+                  text: `Error: Task cannot depend on itself.`
+                }],
+                isError: true
+              };
+            }
+            const depTask = await storage.getTask(depId);
+            if (!depTask) {
+              return {
+                content: [{
+                  type: 'text' as const,
+                  text: `Error: Dependency task with ID "${depId}" not found.`
+                }],
+                isError: true
+              };
+            }
+          }
+        }
+
         const updates: any = {
           updatedAt: new Date().toISOString()
         };
@@ -122,6 +169,34 @@ export function createUpdateTaskTool(storage: Storage) {
 
         if (completed !== undefined) {
           updates.completed = completed;
+        }
+
+        if (dependsOn !== undefined) {
+          updates.dependsOn = dependsOn;
+        }
+
+        if (priority !== undefined) {
+          updates.priority = priority;
+        }
+
+        if (complexity !== undefined) {
+          updates.complexity = complexity;
+        }
+
+        if (status !== undefined) {
+          updates.status = status;
+        }
+
+        if (tags !== undefined) {
+          updates.tags = tags;
+        }
+
+        if (estimatedHours !== undefined) {
+          updates.estimatedHours = estimatedHours;
+        }
+
+        if (actualHours !== undefined) {
+          updates.actualHours = actualHours;
         }
 
         const updatedTask = await storage.updateTask(id, updates);
@@ -144,8 +219,15 @@ export function createUpdateTaskTool(storage: Storage) {
         if (name !== undefined) changedFields.push('name');
         if (details !== undefined) changedFields.push('details');
         if (completed !== undefined) changedFields.push('completion status');
+        if (dependsOn !== undefined) changedFields.push('dependencies');
+        if (priority !== undefined) changedFields.push('priority');
+        if (complexity !== undefined) changedFields.push('complexity');
+        if (status !== undefined) changedFields.push('status');
+        if (tags !== undefined) changedFields.push('tags');
+        if (estimatedHours !== undefined) changedFields.push('estimated hours');
+        if (actualHours !== undefined) changedFields.push('actual hours');
 
-        const status = updatedTask.completed ? '✅ Completed' : '⏳ Pending';
+        const taskStatus = updatedTask.status || (updatedTask.completed ? 'done' : 'pending');
 
         return {
           content: [{
@@ -154,11 +236,22 @@ export function createUpdateTaskTool(storage: Storage) {
 
 **${updatedTask.name}** (ID: ${updatedTask.id})
 Project: ${projectName}
-Status: ${status}
+Priority: ${updatedTask.priority || 'Not set'}/10
+Complexity: ${updatedTask.complexity || 'Not set'}/10
+Status: ${taskStatus}
+Completed: ${updatedTask.completed ? 'Yes' : 'No'}
+Tags: ${updatedTask.tags?.join(', ') || 'None'}
+Dependencies: ${updatedTask.dependsOn?.length ? updatedTask.dependsOn.join(', ') : 'None'}
+Estimated Hours: ${updatedTask.estimatedHours || 'Not set'}
+Actual Hours: ${updatedTask.actualHours || 'Not set'}
 Details: ${updatedTask.details}
 Last Updated: ${new Date(updatedTask.updatedAt).toLocaleString()}
 
-Updated fields: ${changedFields.join(', ')}`
+Updated fields: ${changedFields.join(', ')}
+
+🎯 **Next Steps:**
+• Use \`get_next_task_recommendation\` to see what to work on next
+• Run \`analyze_task_complexity\` if complexity has changed`
           }]
         };
       } catch (error) {

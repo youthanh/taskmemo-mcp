@@ -12,13 +12,29 @@ import { Task } from '../../models/task.js';
 export function createCreateTaskTool(storage: Storage) {
   return {
     name: 'create_task',
-    description: 'Create a new task within a specific project',
+    description: 'Create a new task within a specific project with optional dependencies, priority, complexity, and other TaskMaster-like features',
     inputSchema: {
       name: z.string(),
       details: z.string(),
-      projectId: z.string()
+      projectId: z.string(),
+      dependsOn: z.array(z.string()).optional(),
+      priority: z.number().min(1).max(10).optional(),
+      complexity: z.number().min(1).max(10).optional(),
+      status: z.enum(['pending', 'in-progress', 'blocked', 'done']).optional(),
+      tags: z.array(z.string()).optional(),
+      estimatedHours: z.number().min(0).optional()
     },
-    handler: async ({ name, details, projectId }: { name: string; details: string; projectId: string }) => {
+    handler: async ({ name, details, projectId, dependsOn, priority, complexity, status, tags, estimatedHours }: {
+      name: string;
+      details: string;
+      projectId: string;
+      dependsOn?: string[];
+      priority?: number;
+      complexity?: number;
+      status?: 'pending' | 'in-progress' | 'blocked' | 'done';
+      tags?: string[];
+      estimatedHours?: number;
+    }) => {
       try {
         // Validate inputs
         if (!name || name.trim().length === 0) {
@@ -97,6 +113,22 @@ export function createCreateTaskTool(storage: Storage) {
           };
         }
 
+        // Validate dependencies exist if provided
+        if (dependsOn && dependsOn.length > 0) {
+          for (const depId of dependsOn) {
+            const depTask = await storage.getTask(depId);
+            if (!depTask) {
+              return {
+                content: [{
+                  type: 'text' as const,
+                  text: `Error: Dependency task with ID "${depId}" not found.`
+                }],
+                isError: true
+              };
+            }
+          }
+        }
+
         const now = new Date().toISOString();
         const task: Task = {
           id: randomUUID(),
@@ -105,7 +137,13 @@ export function createCreateTaskTool(storage: Storage) {
           projectId,
           completed: false,
           createdAt: now,
-          updatedAt: now
+          updatedAt: now,
+          dependsOn: dependsOn || [],
+          priority: priority || 5,
+          complexity: complexity,
+          status: status || 'pending',
+          tags: tags || [],
+          estimatedHours: estimatedHours
         };
 
         const createdTask = await storage.createTask(task);
@@ -118,10 +156,18 @@ export function createCreateTaskTool(storage: Storage) {
 **${createdTask.name}** (ID: ${createdTask.id})
 Project: ${project.name}
 Details: ${createdTask.details}
-Status: Pending
+Priority: ${createdTask.priority}/10
+Complexity: ${createdTask.complexity || 'Not set'}/10
+Status: ${createdTask.status}
+Tags: ${createdTask.tags?.join(', ') || 'None'}
+Dependencies: ${createdTask.dependsOn?.length ? createdTask.dependsOn.join(', ') : 'None'}
+Estimated Hours: ${createdTask.estimatedHours || 'Not set'}
 Created: ${new Date(createdTask.createdAt).toLocaleString()}
 
-You can now add subtasks to this task using the create_subtask tool, or mark it as completed using update_task.`
+🎯 **Next Steps:**
+• Use \`get_next_task_recommendation\` to see if this task is ready to work on
+• Add subtasks using \`create_subtask\` for complex tasks
+• Update progress using \`update_task\` as you work`
           }]
         };
       } catch (error) {

@@ -2,8 +2,136 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.7.0] - 2025-06-04
+
+### 🚀 MAJOR: Advanced Task Management & AI Agent Tools
+
+This release transforms the MCP server into a comprehensive task management platform with advanced AI agent capabilities, enhanced task metadata, and intelligent workflow tools.
+
+### Added
+
+#### 🎯 Enhanced Task Model with Rich Metadata
+- **Task Dependencies**: `dependsOn` field for task dependency management with validation
+- **Priority System**: 1-10 scale task prioritization for workflow management
+- **Complexity Estimation**: 1-10 scale complexity scoring for project planning
+- **Enhanced Status Workflow**: `pending` → `in-progress` → `blocked` → `done` status tracking
+- **Tag-Based Organization**: Flexible categorization and filtering system
+- **Time Tracking**: `estimatedHours` and `actualHours` for project planning and reporting
+- **Backward Compatibility**: All new fields are optional, existing tasks continue to work
+
+#### 🤖 Advanced AI Agent Tools (6 New Tools)
+- **`parse_prd`**: Parse Product Requirements Documents and automatically generate structured tasks with dependencies, priorities, and complexity estimates
+- **`get_next_task_recommendation`**: Intelligent task recommendations based on dependencies, priorities, complexity, and current project status
+- **`analyze_task_complexity`**: Analyze task complexity and suggest breaking down overly complex tasks into manageable subtasks
+- **`infer_task_progress`**: Analyze codebase to infer task completion status from implementation evidence
+- **`research_task`**: Guide AI agents to perform comprehensive web research with memory integration
+- **`generate_research_queries`**: Generate intelligent, targeted web search queries for task research
+
+#### 🔧 Enhanced Task Management Tools
+- **`create_task`**: Now supports all enhanced metadata fields (dependencies, priority, complexity, status, tags, time tracking)
+- **`update_task`**: Enhanced to handle all new metadata fields including dependency updates
+- **Dependency Validation**: Automatic validation of task dependencies during creation and updates
+- **Intelligent Defaults**: Smart default values for priority (5) and status (pending)
+
+#### 🧠 Hybrid Research Integration
+- **Web Research Guidance**: AI agents receive comprehensive research instructions
+- **Memory Integration**: Research findings automatically stored in searchable memories
+- **Query Generation**: Intelligent search query suggestions for optimal research results
+- **Knowledge Caching**: Persistent research findings for future reference
+
+### Enhanced
+
+#### 📊 Task Data Model (v1.7.0)
+```typescript
+interface Task {
+  // Existing fields (unchanged)
+  id: string;
+  name: string;
+  details: string;
+  projectId: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  // New enhanced metadata fields
+  dependsOn?: string[];          // Task dependencies
+  priority?: number;             // Priority (1-10, default: 5)
+  complexity?: number;           // Complexity (1-10)
+  status?: 'pending' | 'in-progress' | 'blocked' | 'done';
+  tags?: string[];               // Categorization tags
+  estimatedHours?: number;       // Time estimation
+  actualHours?: number;          // Time tracking
+}
+```
+
+#### 🎯 Intelligent Task Recommendations
+- **Dependency-Aware**: Recommends only tasks with completed dependencies
+- **Priority-Based Scoring**: Higher priority tasks ranked higher
+- **Complexity Consideration**: Balances complexity with priority for optimal workflow
+- **Tag Filtering**: Support for preferred tag-based recommendations
+- **Blocked Task Exclusion**: Automatically excludes blocked tasks from recommendations
+
+#### 📈 Complexity Analysis & Task Breakdown
+- **Automatic Detection**: Identifies overly complex tasks (configurable threshold)
+- **Breakdown Suggestions**: AI-generated suggestions for splitting complex tasks
+- **Auto-Subtask Creation**: Optional automatic subtask generation from complex tasks
+- **Workflow Optimization**: Helps maintain manageable task sizes for better productivity
+
+#### 🔍 Progress Inference from Codebase
+- **File Analysis**: Scans codebase for implementation evidence
+- **Confidence Scoring**: Provides confidence levels for inferred completion status
+- **Auto-Update Capability**: Optional automatic task status updates based on code analysis
+- **Multi-Language Support**: Supports various programming languages and file types
+
+### Technical Details
+
+#### 🏗️ Architecture Enhancements
+- **Modular Tool Structure**: New tools organized in dedicated feature modules
+- **Enhanced Storage**: Task storage updated to handle new metadata fields
+- **Validation Layer**: Comprehensive validation for dependencies and metadata
+- **Backward Compatibility**: Existing task data automatically compatible with new schema
+
+#### 🔧 Tool Implementation
+- **Intelligent Algorithms**: Advanced scoring and recommendation algorithms
+- **Error Handling**: Comprehensive error handling and validation
+- **Performance Optimized**: Efficient dependency resolution and complexity analysis
+- **Configurable Parameters**: Flexible configuration for different workflow needs
+
+#### 📊 Dependency Management
+- **Circular Dependency Detection**: Prevents circular task dependencies
+- **Cascade Validation**: Validates dependency chains for consistency
+- **Orphan Prevention**: Ensures dependency integrity during task operations
+- **Performance Optimization**: Efficient dependency graph traversal
+
+### Use Cases
+
+#### 🎯 AI Agent Workflows
+- **PRD Processing**: AI agents can parse requirements and generate complete task breakdowns
+- **Workflow Optimization**: Intelligent task recommendations for optimal productivity
+- **Research Integration**: Comprehensive research capabilities with persistent knowledge storage
+- **Progress Tracking**: Automatic progress inference from codebase analysis
+
+#### 👥 Human-AI Collaboration
+- **Enhanced Planning**: Rich task metadata enables better project planning
+- **Priority Management**: Clear prioritization system for focused work
+- **Complexity Awareness**: Understanding of task complexity for better estimation
+- **Research Support**: AI-assisted research with human oversight and validation
+
+### Migration and Compatibility
+
+#### ✅ Backward Compatibility
+- **No Breaking Changes**: All existing functionality preserved
+- **Optional Fields**: New metadata fields are optional
+- **Data Migration**: Existing tasks automatically work with new system
+- **Tool Interface**: All existing tool interfaces unchanged
+
+#### 🔄 Gradual Adoption
+- **Incremental Enhancement**: Can adopt new features gradually
+- **Mixed Workflows**: Old and new task formats work together seamlessly
+- **VS Code Extension**: Companion extension updated to support all new features
+- **Documentation**: Comprehensive migration guide and examples
+
+---
 
 ## [1.6.0] - 2025-01-27
 

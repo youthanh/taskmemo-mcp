@@ -6,24 +6,29 @@
 [![GitHub license](https://img.shields.io/github/license/Pimzino/agentic-tools-mcp.svg)](https://github.com/Pimzino/agentic-tools-mcp/blob/main/LICENSE)
 [![Node.js Version](https://img.shields.io/node/v/@pimzino/agentic-tools-mcp.svg)](https://nodejs.org/)
 
-A comprehensive Model Context Protocol (MCP) server providing AI assistants with powerful **task management** and **agent memories** capabilities with **project-specific storage**.
+A comprehensive Model Context Protocol (MCP) server providing AI assistants with powerful **advanced task management** and **agent memories** capabilities with **project-specific storage**.
 
 ## 🔗 Ecosystem
 
 This MCP server is part of a complete task and memory management ecosystem:
 
 - **🖥️ [VS Code Extension](https://github.com/Pimzino/agentic-tools-mcp-companion)** - Beautiful GUI interface for managing tasks and memories directly in VS Code
-- **⚡ MCP Server** (this repository) - Command-line tools and API for AI assistants
+- **⚡ MCP Server** (this repository) - Advanced AI agent tools and API for intelligent task management
 
-> **💡 Pro Tip**: Use both together for the ultimate productivity experience! The VS Code extension provides a visual interface while the MCP server enables AI assistant integration.
+> **💡 Pro Tip**: Use both together for the ultimate productivity experience! The VS Code extension provides a visual interface while the MCP server enables AI assistant integration with advanced features like PRD parsing, task recommendations, and research capabilities.
 
 ## Features
 
-### 🎯 Complete Task Management System
+### 🎯 Advanced Task Management System
 - **Projects**: Organize work into distinct projects with descriptions
-- **Tasks**: Break down projects into manageable tasks
-- **Subtasks**: Further decompose tasks into actionable subtasks
+- **Enhanced Tasks**: Rich task metadata with dependencies, priority, complexity, status, tags, and time tracking
+- **Simple Subtasks**: Focused implementation tracking with name, details, and completion
 - **Hierarchical Organization**: Projects → Tasks → Subtasks
+- **Intelligent Dependencies**: Task dependency management with validation
+- **Priority & Complexity**: 1-10 scale prioritization and complexity estimation
+- **Enhanced Status Tracking**: pending, in-progress, blocked, done status workflow
+- **Tag-Based Organization**: Flexible categorization and filtering
+- **Time Tracking**: Estimated and actual hours for project planning
 - **Progress Tracking**: Monitor completion status at all levels
 - **Project-Specific Storage**: Each working directory has isolated task data
 - **Git-Trackable**: Task data can be committed alongside your code
@@ -47,10 +52,18 @@ This MCP server is part of a complete task and memory management ecosystem:
 
 #### Task Management
 - `list_tasks` - View tasks (optionally filtered by project)
-- `create_task` - Create a new task within a project
+- `create_task` - Create a new task with enhanced metadata (dependencies, priority, complexity, status, tags, time tracking)
 - `get_task` - Get detailed task information
-- `update_task` - Edit task details or mark as completed
+- `update_task` - Edit task details, metadata, or mark as completed
 - `delete_task` - Delete task and all associated subtasks
+
+#### Advanced Task Management (AI Agent Tools)
+- `parse_prd` - Parse Product Requirements Documents and automatically generate structured tasks
+- `get_next_task_recommendation` - Get intelligent task recommendations based on dependencies, priorities, and complexity
+- `analyze_task_complexity` - Analyze task complexity and suggest breaking down overly complex tasks
+- `infer_task_progress` - Analyze codebase to infer task completion status from implementation evidence
+- `research_task` - Guide AI agents to perform comprehensive web research with memory integration
+- `generate_research_queries` - Generate intelligent, targeted web search queries for task research
 
 #### Subtask Management
 - `list_subtasks` - View subtasks (filtered by task or project)
@@ -164,10 +177,11 @@ For the best user experience, install the [**Agentic Tools MCP Companion**](http
 3. Enjoy a beautiful GUI interface for all task and memory management
 
 **Benefits of using both together:**
-- 🎯 **Visual Task Management**: Hierarchical tree view with drag-and-drop
-- 🧠 **Memory Browser**: Search and organize memories with rich UI
+- 🎯 **Visual Task Management**: Rich forms with priority, complexity, status, tags, and time tracking
+- 🎨 **Enhanced UI**: Status emojis, priority badges, and visual indicators
 - 🔄 **Real-time Sync**: Changes in VS Code instantly available to AI assistants
 - 📁 **Project Integration**: Seamlessly integrated with your workspace
+- 🤖 **AI Collaboration**: Human planning with AI execution for optimal productivity
 
 ### With Other MCP Clients
 The server uses STDIO transport and can be integrated with any MCP-compatible client:
@@ -195,16 +209,25 @@ npx -y @pimzino/agentic-tools-mcp --claude
 }
 ```
 
-### Task
+### Task (Enhanced v1.7.0)
 ```typescript
 {
-  id: string;           // Unique identifier
-  name: string;         // Task name
-  details: string;      // Enhanced description
-  projectId: string;    // Parent project reference
-  completed: boolean;   // Completion status
-  createdAt: string;    // ISO timestamp
-  updatedAt: string;    // ISO timestamp
+  id: string;                    // Unique identifier
+  name: string;                  // Task name
+  details: string;               // Enhanced description
+  projectId: string;             // Parent project reference
+  completed: boolean;            // Completion status
+  createdAt: string;             // ISO timestamp
+  updatedAt: string;             // ISO timestamp
+
+  // Enhanced metadata fields (v1.7.0)
+  dependsOn?: string[];          // Task dependencies (IDs of prerequisite tasks)
+  priority?: number;             // Priority level (1-10, where 10 is highest)
+  complexity?: number;           // Complexity estimate (1-10, where 10 is most complex)
+  status?: string;               // Enhanced status: 'pending' | 'in-progress' | 'blocked' | 'done'
+  tags?: string[];               // Tags for categorization and filtering
+  estimatedHours?: number;       // Estimated time to complete (hours)
+  actualHours?: number;          // Actual time spent (hours)
 }
 ```
 
@@ -245,13 +268,18 @@ npx -y @pimzino/agentic-tools-mcp --claude
    - description="Complete overhaul of company website"
    ```
 
-2. **Add Tasks**
+2. **Add Enhanced Tasks**
    ```
    Use create_task with:
    - workingDirectory="/path/to/your/project"
    - name="Design mockups"
    - details="Create wireframes and high-fidelity designs"
    - projectId="[project-id-from-step-1]"
+   - priority=8 (high priority)
+   - complexity=6 (above average complexity)
+   - status="pending"
+   - tags=["design", "ui", "mockups"]
+   - estimatedHours=16
    ```
 
 3. **Break Down Tasks**
@@ -410,16 +438,21 @@ src/
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and release notes.
 
-### Current Version: 1.6.0
-- ✅ Complete task management system
-- ✅ Agent memories with title/content architecture and JSON file storage
-- ✅ Intelligent multi-field search with relevance scoring
-- ✅ Cross-platform file path handling
-- ✅ Project-specific storage with comprehensive MCP tools
-- ✅ Global directory mode with --claude flag for Claude Desktop
-- ✅ Dual storage modes: project-specific and global user directory
-- ✅ Simplified schema with enhanced documentation
-- ✅ VS Code extension ecosystem integration
+### Current Version: 1.7.0
+- ✅ **Enhanced Task Management**: Rich metadata with dependencies, priority, complexity, status, tags, and time tracking
+- ✅ **Advanced AI Agent Tools**: PRD parsing, task recommendations, complexity analysis, progress inference, and research guidance
+- ✅ **Intelligent Task Dependencies**: Dependency validation and workflow management
+- ✅ **Priority & Complexity System**: 1-10 scale prioritization and complexity estimation
+- ✅ **Enhanced Status Workflow**: pending → in-progress → blocked → done status tracking
+- ✅ **Tag-Based Organization**: Flexible categorization and filtering system
+- ✅ **Time Tracking**: Estimated and actual hours for project planning
+- ✅ **Hybrid Research Integration**: Web research with memory caching for AI agents
+- ✅ **Complete task management system** with hierarchical organization
+- ✅ **Agent memories** with title/content architecture and JSON file storage
+- ✅ **Intelligent multi-field search** with relevance scoring
+- ✅ **Project-specific storage** with comprehensive MCP tools
+- ✅ **Global directory mode** with --claude flag for Claude Desktop
+- ✅ **VS Code extension ecosystem** integration
 
 ## Acknowledgments
 
@@ -466,16 +499,18 @@ npm start
 **[Agentic Tools MCP Companion](https://github.com/Pimzino/agentic-tools-mcp-companion)** - A beautiful VS Code extension that provides a GUI interface for this MCP server.
 
 **Key Features:**
-- 🎯 **Hierarchical Tree View**: Visual project → task → subtask management
-- 🧠 **Memory Browser**: Search and organize memories with rich UI
-- ✏️ **Rich Editors**: Form-based editors for creating and editing tasks/memories
-- 🔄 **Real-time Sync**: 100% compatible with MCP server data
-- 📁 **Workspace Integration**: Seamlessly integrated with VS Code workspaces
+- 🎯 **Visual Task Management**: Rich GUI with enhanced task metadata forms
+- 📝 **Enhanced Forms**: Priority, complexity, status, tags, and time tracking
+- 🎨 **Visual Indicators**: Status emojis, priority badges, and complexity indicators
+- 📊 **Rich Tooltips**: Complete task information on hover
+- 🔄 **Real-time Sync**: Instant synchronization with MCP server data
+- � **Responsive Design**: Adaptive forms that work on different screen sizes
 
 **Perfect for:**
-- Developers who prefer visual interfaces
-- Teams collaborating on projects
-- Anyone who wants both AI assistant integration AND a beautiful GUI
+- Visual task management and planning
+- Teams who prefer GUI interfaces
+- Project managers who need rich task metadata
+- Anyone who wants beautiful task organization in VS Code
 
 ## Support
 

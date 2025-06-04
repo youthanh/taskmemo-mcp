@@ -16,6 +16,20 @@ export interface Task {
   createdAt: string;
   /** Timestamp when the task was last updated */
   updatedAt: string;
+  /** Task dependencies - IDs of tasks that must be completed before this task */
+  dependsOn?: string[];
+  /** Task priority level (1-10, where 10 is highest priority) */
+  priority?: number;
+  /** Estimated complexity/effort (1-10, where 10 is most complex) */
+  complexity?: number;
+  /** Task status beyond just completed (pending, in-progress, blocked, done) */
+  status?: 'pending' | 'in-progress' | 'blocked' | 'done';
+  /** Tags for categorization and filtering */
+  tags?: string[];
+  /** Estimated time to complete in hours */
+  estimatedHours?: number;
+  /** Actual time spent in hours */
+  actualHours?: number;
 }
 
 /**
@@ -28,6 +42,18 @@ export interface CreateTaskInput {
   details: string;
   /** Reference to parent project */
   projectId: string;
+  /** Task dependencies - IDs of tasks that must be completed before this task */
+  dependsOn?: string[];
+  /** Task priority level (1-10, where 10 is highest priority) */
+  priority?: number;
+  /** Estimated complexity/effort (1-10, where 10 is most complex) */
+  complexity?: number;
+  /** Task status (defaults to 'pending') */
+  status?: 'pending' | 'in-progress' | 'blocked' | 'done';
+  /** Tags for categorization and filtering */
+  tags?: string[];
+  /** Estimated time to complete in hours */
+  estimatedHours?: number;
 }
 
 /**
@@ -40,4 +66,18 @@ export interface UpdateTaskInput {
   details?: string;
   /** Task completion status (optional) */
   completed?: boolean;
+  /** Task dependencies - IDs of tasks that must be completed before this task */
+  dependsOn?: string[];
+  /** Task priority level (1-10, where 10 is highest priority) */
+  priority?: number;
+  /** Estimated complexity/effort (1-10, where 10 is most complex) */
+  complexity?: number;
+  /** Task status */
+  status?: 'pending' | 'in-progress' | 'blocked' | 'done';
+  /** Tags for categorization and filtering */
+  tags?: string[];
+  /** Estimated time to complete in hours */
+  estimatedHours?: number;
+  /** Actual time spent in hours */
+  actualHours?: number;
 }
