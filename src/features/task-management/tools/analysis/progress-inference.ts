@@ -10,7 +10,7 @@ import { join, extname } from 'path';
  */
 export function createProgressInferenceTool(storage: Storage, getWorkingDirectoryDescription: (config: any) => string, config: any) {
   return {
-    name: 'infer_task_progress_Agentic_Tools',
+    name: 'infer_task_progress',
     description: 'Analyze the codebase to infer which tasks appear to be completed based on code changes, file creation, and implementation evidence. Intelligent progress inference feature for automatic task completion tracking.',
     inputSchema: z.object({
       workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),

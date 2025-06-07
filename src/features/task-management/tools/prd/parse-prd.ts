@@ -10,7 +10,7 @@ import { Storage } from '../../storage/storage.js';
  */
 export function createParsePRDTool(storage: Storage, getWorkingDirectoryDescription: (config: any) => string, config: any) {
   return {
-    name: 'parse_prd_Agentic_Tools',
+    name: 'parse_prd',
     description: 'Parse a Product Requirements Document (PRD) and automatically generate structured tasks with dependencies, priorities, and complexity estimates. This tool analyzes PRD content and creates a comprehensive task breakdown with intelligent analysis.',
     inputSchema: z.object({
       workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
