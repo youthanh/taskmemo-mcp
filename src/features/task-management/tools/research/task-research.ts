@@ -14,7 +14,7 @@ export function createTaskResearchTool(
   config: any
 ) {
   return {
-    name: 'research_task_Agentic_Tools',
+    name: 'research_task',
     description: 'Guide the AI agent to perform comprehensive web research for a task, with intelligent research suggestions and automatic memory storage of findings. Combines web research capabilities with local knowledge caching.',
     inputSchema: z.object({
       workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),

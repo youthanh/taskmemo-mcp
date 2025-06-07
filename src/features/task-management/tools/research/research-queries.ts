@@ -13,7 +13,7 @@ export function createResearchQueriesGeneratorTool(
   config: any
 ) {
   return {
-    name: 'generate_research_queries_Agentic_Tools',
+    name: 'generate_research_queries',
     description: 'Generate intelligent, targeted web search queries for task research. Provides structured search strategies to help AI agents find the most relevant information efficiently.',
     inputSchema: z.object({
       workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
