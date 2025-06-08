@@ -430,13 +430,28 @@ ${lowConfidence.slice(0, 5).map(r =>
 `;
   }
 
-  report += `💡 **Recommendations:**
-1. Review high-confidence completions and mark as done if accurate
-2. Check in-progress tasks for recent activity
-3. Consider updating task descriptions to include more specific keywords
-4. Run this analysis regularly to track progress automatically
+  // Determine a relevant projectId for examples, if possible
+  const relevantProjectIds = [...new Set(analysisResults.map(r => r.task.projectId))];
+  const exampleProjectId = relevantProjectIds.length === 1 ? relevantProjectIds[0] : "project_id_if_known";
 
-⚠️ **Note:** This analysis is based on code patterns and keywords. Manual verification is recommended for important decisions.`;
+  let new_guidance = "\n👉 **Your Actions: Verify Progress and Update Tasks**\n\n";
+
+  new_guidance += "1.  **Verify and Update Completed Tasks:** For tasks reported with high confidence of completion (especially if not auto-updated), verify their status. If correct, use the \`update_task\` tool to mark them as 'done' and 'completed: true'.\n"
+  new_guidance += "    *   Example: \`update_task({ id: \"task_id_from_report\", status: \"done\", completed: true })\`\n\n";
+
+  new_guidance += "2.  **Check In-Progress Tasks:** For tasks identified as 'Likely In Progress', confirm their current status. If they are indeed being worked on, ensure their status is 'in-progress' using \`update_task\`.\n"
+  new_guidance += "    *   Example: \`update_task({ id: \"task_id_from_report\", status: \"in-progress\" })\`\n\n";
+
+  new_guidance += "3.  **Address Tasks with No Clear Evidence:** For tasks where no clear evidence was found, consider if they have started or if their descriptions need more keywords for better future detection. If they are blocked, update their status accordingly.\n"
+  new_guidance += "    *   Example: \`update_task({ id: \"task_id_from_report\", status: \"blocked\", details: \"New details with more keywords...\" })\`\n\n";
+
+  new_guidance += "4.  **Run Analysis Regularly:** To keep track of progress automatically, run this \`infer_task_progress\` tool periodically.\n\n";
+
+  new_guidance += "5.  **Determine Next Task:** After updating statuses, use \`get_next_task_recommendation\` to see what to work on next.\n";
+  new_guidance += "    *   Example: \`get_next_task_recommendation({ projectId: \"" + exampleProjectId + "\" })\`\n\n";
+
+  new_guidance += "⚠️ **Important Note:** This analysis is based on code patterns and keywords. Manual verification of inferred statuses is highly recommended before making critical decisions or reporting progress.";
+  report += new_guidance;
 
   return report;
 }

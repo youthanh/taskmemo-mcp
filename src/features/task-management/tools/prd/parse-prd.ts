@@ -85,10 +85,15 @@ ${createdTasks.map(task =>
   Tags: ${task.tags?.join(', ') || 'None'}`
 ).join('\n\n')}
 
-🎯 **Next Steps:**
-1. Review generated tasks and adjust priorities/dependencies as needed
-2. Use \`get_next_task_recommendation\` to see which tasks are ready to start
-3. Begin implementation with the recommended tasks`
+👉 **Your Actions: Review Tasks and Determine Next Steps**
+
+1.  **Review and Refine Generated Tasks:** Carefully examine each task generated from the PRD. If you need to adjust names, details, priorities, complexity, or dependencies, use the \`update_task\` tool.
+    *   Example: \`update_task({ id: "task_id_to_update", name: "new_task_name", details: "updated_details", priority: 7 })\`
+
+2.  **Identify Starting Task:** Once you are satisfied with the task definitions, use the \`get_next_task_recommendation\` tool to identify the best task to begin with in this project.
+    *   Example: \`get_next_task_recommendation({ projectId: "${project.id}" })\`
+
+3.  **Begin Implementation:** After getting a recommendation, you can start working on the suggested task. Remember to update its status using \`update_task\` (e.g., set to 'in-progress').
           }]
         };
 
