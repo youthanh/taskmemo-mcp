@@ -8,7 +8,7 @@ import { Storage } from '../../storage/storage.js';
  */
 export function createComplexityAnalysisTool(storage: Storage, getWorkingDirectoryDescription: (config: any) => string, config: any) {
   return {
-    name: 'analyze_task_complexity_Agentic_Tools',
+    name: 'analyze_task_complexity',
     description: 'Analyze task complexity and suggest breaking down overly complex tasks into smaller, manageable subtasks. Intelligent complexity analysis feature for better productivity and progress tracking.',
     inputSchema: z.object({
       workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
@@ -408,13 +408,37 @@ ${task.suggestions.map(s => `   • ${s.name} (Est: ${s.estimatedHours}h)`).join
 `;
   }
 
-  report += `🎯 **Recommendations:**
-1. Break down complex tasks into smaller, focused subtasks
-2. Aim for tasks with complexity ≤${threshold} and ≤8 hours of work
-3. Use the suggested breakdowns as a starting point
-4. Re-run this analysis after making changes
+  if (results.complexTasks.length > 0) {
+    let new_guidance = "\n👉 **Your Actions: Address Complex Tasks & Proceed**\n\n";
+    if (!autoCreated) { // autoCreated is the autoCreateSubtasks boolean
+        new_guidance += "1.  **Break Down Complex Tasks:** For each complex task listed above, review the \"Suggested Breakdown.\" " +
+                       "You can create these as subtasks using the \`create_subtask\` tool or simplify the main task using \`update_task\`.\n" +
+                       "    *   Example for \`create_subtask\`: \`create_subtask({ taskId: \"task_id_from_above\", name: \"suggested_subtask_name\", details: \"...\" })\`\n" +
+                       "    *   Example for \`update_task\`: \`update_task({ id: \"task_id_from_above\", details: \"simplified_details\", complexity: new_lower_complexity })\`\n\n";
+    } else {
+        new_guidance += "1.  **Review Auto-Created Subtasks:** Subtasks have been automatically created based on the suggestions. " +
+                       "Review them using \`list_subtasks\` and refine them if necessary using \`update_subtask\`.\n" +
+                       "    *   Example: \`list_subtasks({ taskId: \"task_id_from_above\" })\`\n\n";
+    }
 
-💡 **Pro Tip:** Well-scoped tasks lead to better progress tracking and less overwhelming work sessions!`;
+    new_guidance += "2.  **Re-analyze (Optional):** After addressing the complexities, you can re-run this analysis for a specific task to confirm its new complexity score.\n" +
+                   "    *   Example: \`analyze_task_complexity({ taskId: \"task_id_from_above\" })\`\n\n";
+    new_guidance += "3.  **Determine Next Task:** Once tasks are appropriately scoped, use the \`get_next_task_recommendation\` tool to decide what to work on next.\n" +
+                   "    *   Example: \`get_next_task_recommendation({ projectId: \"project_id_if_known_or_relevant\" })\`\n\n";
+    new_guidance += "💡 **Pro Tip:** Well-scoped tasks lead to better progress tracking and less overwhelming work sessions!";
+    report += new_guidance;
+  } else {
+    // This part of the original logic was:
+    // if (results.complexTasks.length === 0) {
+    //   report += `✅ **Great news!** All tasks are within the complexity threshold. Your tasks are well-scoped and manageable.`;
+    //   return report; // Original logic returned early
+    // }
+    // The new logic requires this to be an else block.
+    // The initial part of the "Great news!" message is already added before the `⚠️ Complex Tasks Requiring Attention:` block if complexTasks.length === 0.
+    // So we only need to add the new actionable part.
+    report += "\n\n👉 **Your Next Step:** You can proceed to determine your next task using \`get_next_task_recommendation\`.\n" +
+              "    *   Example: \`get_next_task_recommendation({ projectId: \"project_id_if_known_or_relevant\" })\`";
+  }
 
   return report;
 }

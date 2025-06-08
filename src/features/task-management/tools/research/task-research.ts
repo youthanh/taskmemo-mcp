@@ -14,7 +14,7 @@ export function createTaskResearchTool(
   config: any
 ) {
   return {
-    name: 'research_task_Agentic_Tools',
+    name: 'research_task',
     description: 'Guide the AI agent to perform comprehensive web research for a task, with intelligent research suggestions and automatic memory storage of findings. Combines web research capabilities with local knowledge caching.',
     inputSchema: z.object({
       workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
@@ -90,11 +90,19 @@ ${researchGuidance}
 
 ${memoryInstructions}
 
-🔄 **After Research:**
-1. Update the task with any new insights using \`update_task\`
-2. Adjust complexity/priority if research reveals new information
-3. Consider breaking down the task if research shows it's more complex than expected
-4. Use \`get_next_task_recommendation\` to see if this task is now ready to start`
+👉 **Your Actions: Post-Research Task Updates & Next Steps**
+
+Once your research is complete and findings are stored:
+
+1.  **Update Task Details:** If your research uncovered new information, requirements, or changes to the task's scope, duration, or complexity, use the \`update_task\` tool.
+    *   Example: \`update_task({ id: "${task.id}", details: "new details based on research", complexity: new_complexity_value })\`
+
+2.  **Analyze Complexity & Breakdown (If Needed):** If the research suggests the task is significantly more complex than initially thought, it might need to be broken down.
+    *   You can use \`analyze_task_complexity\` to get suggestions: \`analyze_task_complexity({ taskId: "${task.id}" })\`
+    *   Alternatively, create subtasks directly using \`create_subtask\`: \`create_subtask({ taskId: "${task.id}", name: "subtask_name", details: "..." })\`
+
+3.  **Determine Next Task:** To see what task (including potentially this one, if it's now unblocked or its priority has increased) is best to work on next, use the \`get_next_task_recommendation\` tool.
+    *   Example: \`get_next_task_recommendation({ projectId: "${task.projectId}" })\`
           }]
         };
 
@@ -233,7 +241,11 @@ function generateResearchGuidance(
 
   const guidance = depthGuidance[depth as keyof typeof depthGuidance];
 
-  return `📋 **Research Instructions for AI Agent:**
+  return `👉 **Your Action: Perform Web Research**
+Now, use your web search capabilities to investigate each of the "Research Areas to Investigate" listed above. Follow the strategy outlined below.
+If you need help formulating specific search queries for this task, you can use the \`generate_research_queries\` tool. Example: \`generate_research_queries({ taskId: "${task.id}" })\`
+
+📋 **Research Instructions for AI Agent:**
 
 **Research Depth:** ${depth.toUpperCase()} (${guidance.timeframe})
 **Focus:** ${guidance.focus}
@@ -271,10 +283,11 @@ ${depth === 'comprehensive' ? '6. **Search for academic papers** or research on 
 /**
  * Generate instructions for storing research findings in memories
  */
-function generateMemoryStorageInstructions(task: Task, researchAreas: string[]): string {
-  return `💾 **Memory Storage Instructions:**
+function generateMemoryStorageInstructions(task: Task, researchAreas:string[]): string {
+  return `👉 **Your Action: Store Findings**
+After completing your research for each major area, use the \`create_memory\` tool to store a comprehensive summary. This makes the information available for future reference.
 
-After completing your research, please use the \`create_memory\` tool to store your findings:
+💾 **Memory Storage Instructions:**
 
 **For Each Major Research Area, Create a Memory:**
 - **Title:** "${task.name} - [Research Area]" (e.g., "${task.name} - Authentication Best Practices")
