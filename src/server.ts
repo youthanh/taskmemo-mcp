@@ -202,13 +202,22 @@ export async function createServer(config: StorageConfig = { useGlobalDirectory:
     'Explore and organize your task portfolio with intelligent filtering and comprehensive progress tracking. View all tasks across projects or focus on specific project tasks, perfect for sprint planning, progress reviews, and maintaining productivity momentum.',
     {
       workingDirectory: z.string().describe(getWorkingDirectoryDescription(config)),
-      projectId: z.string().optional().describe('Filter tasks to only those belonging to this project (optional)')
+      projectId: z.string().describe('ID of the project to list tasks for'),
+      parentId: z.string().optional().describe('Filter to tasks under this parent (optional)'),
+      showHierarchy: z.boolean().optional().describe('Show tasks in hierarchical tree format (default: true)'),
+      includeCompleted: z.boolean().optional().describe('Include completed tasks in results (default: true)')
     },
-    async ({ workingDirectory, projectId }: { workingDirectory: string; projectId?: string }) => {
+    async ({ workingDirectory, projectId, parentId, showHierarchy, includeCompleted }: {
+      workingDirectory: string;
+      projectId: string;
+      parentId?: string;
+      showHierarchy?: boolean;
+      includeCompleted?: boolean;
+    }) => {
       try {
         const storage = await createStorage(workingDirectory, config);
         const tool = createListTasksTool(storage);
-        return await tool.handler({ projectId });
+        return await tool.handler({ projectId, parentId, showHierarchy, includeCompleted });
       } catch (error) {
         return {
           content: [{
