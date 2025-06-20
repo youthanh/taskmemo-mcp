@@ -2,6 +2,68 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.1] - 2025-06-20
+
+### 🔧 Fixed: Missing Migration Tools for Version 1.8.0
+
+This patch release addresses the missing migration tools that were documented but not properly registered in the MCP server, completing the unlimited hierarchy migration functionality introduced in v1.8.0.
+
+### Added
+
+#### 🚀 Migration Tool Registration
+- **`migrate_subtasks`**: Properly registered migration tool for converting legacy subtasks to unified task model
+- **`move_task`**: Added missing tool for moving tasks within unlimited hierarchy structure
+- **Enhanced `create_task`**: Added missing `parentId` parameter for unlimited nesting depth
+- **Enhanced `update_task`**: Added missing `parentId` parameter for hierarchy reorganization
+
+#### 🎯 Complete Migration Functionality
+- **Automatic Migration**: `migrate_subtasks` tool now available for manual migration execution
+- **Hierarchy Movement**: `move_task` enables flexible task reorganization across unlimited depth
+- **Nested Task Creation**: `create_task` supports unlimited hierarchy with `parentId` parameter
+- **Task Reorganization**: `update_task` allows moving tasks between hierarchy levels
+
+### Fixed
+
+#### 🐛 Migration Tool Registration Issues
+- **Missing Tools**: `migrate_subtasks` and `move_task` were implemented but not registered in server.ts
+- **Incomplete Hierarchy Support**: `create_task` and `update_task` lacked `parentId` parameters
+- **Functionality Gap**: v1.8.0 unlimited hierarchy features were partially inaccessible
+
+#### 📊 Tool Interface Completeness
+- **Parameter Alignment**: All task tools now properly support unlimited hierarchy features
+- **Description Updates**: Enhanced tool descriptions reflect unlimited hierarchy capabilities
+- **Feature Parity**: MCP server now matches the functionality documented in README
+
+### Technical Details
+
+#### 🏗️ Server Registration Updates
+- **Tool Registration**: Added 4 missing tool registrations with proper parameter schemas
+- **Parameter Validation**: Full Zod schema validation for all hierarchy-related parameters
+- **Error Handling**: Comprehensive error handling for migration and hierarchy operations
+- **Backward Compatibility**: All changes maintain full backward compatibility
+
+#### 🔄 Migration Tool Implementation
+- **Status Checking**: Migration tool checks for existing subtasks before proceeding
+- **Data Preservation**: All original task data preserved during migration process
+- **Error Reporting**: Detailed error reporting and troubleshooting guidance
+- **Progress Tracking**: Clear migration progress and completion status reporting
+
+### Migration and Compatibility
+
+#### ✅ Full Compatibility Maintained
+- **No Breaking Changes**: All existing functionality continues to work unchanged
+- **Data Safety**: Migration process preserves all existing data and relationships
+- **Tool Interface**: Existing tool calls continue to work with new parameters being optional
+- **Storage Format**: No changes to underlying storage format or data structure
+
+#### 🎯 Enhanced Migration Experience
+- **Complete Toolset**: All documented v1.8.0 features now fully accessible
+- **User Guidance**: Comprehensive migration instructions and error handling
+- **Status Reporting**: Clear migration status and completion confirmation
+- **Hierarchy Navigation**: Full support for unlimited task nesting and organization
+
+---
+
 ## [1.8.0] - 2025-06-19
 
 ### 🚀 MAJOR: Unified Task Model with Unlimited Hierarchy Depth
