@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "# 🔍 Found 2 memory(ies):\n\n---\n\n## Filters & Limit\n\n**Query:** \"cấu hình\"  \n**Threshold:** 0.3  \n**Filters:** None\n\n---\n\n\n## Memory List\n\n### Memory 1\n**Memory ID:** fce19df6-ee15-43e8-b98d-7d4583c8e69d  \n**Relevance Score:** 41.8%\n\nContent:  \n```markdown\n## Tổng quan cấu hình backend workspace\n\n### Port & Database\n- Port server: 8080 (lấy từ .env)\n- MongoDB URI: mongodb://localhost:27017/bengmt_stack\n- JWT_SECRET: nên cấu hình trong .env, mặc định là \"changeme\" nếu không set\n\n### API Endpoints\n- POST /api/auth/login: Đăng nhập, trả về token, không y⋯📄\n```\n**Category:** architecture  \n**Created:** 24/07/2025, 02:42:58  \n**Metadata:** None\n\n---\n\n### Memory 2\n**Memory ID:** 618bb757-1bb0-4b55-b15c-2124d705feb6  \n**Relevance Score:** 35.6%\n\nContent:  \n```markdown\n## Công nghệ & cấu hình\n\n### Công nghệ chính\n- Express (API, middleware)\n- Apollo Server Express (GraphQL)\n- Mongoose, @typegoose/typegoose (ORM, kết nối MongoDB)\n- bcryptjs (hash mật khẩu)\n- cookie-parser, cors (middleware)\n- jsonwebtoken (JWT)\n- Dataloader, graphql-tools (hỗ trợ GraphQL)\n\n### Alia⋯📄\n```\n**Category:** architecture  \n**Created:** 24/07/2025, 11:25:24  \n**Metadata:** None\n\n---\n**Note:**  \nThe symbol \"⋯📄\" in content indicates truncated or incomplete data. Use get_memory with a specific ID to see full details, or search_memories for text-based search.\n"
+    }
+  ]
+}
