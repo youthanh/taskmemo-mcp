@@ -7,6 +7,8 @@ import { MemoryStorage } from '../../storage/storage.js';
  * @param storage - Memory storage instance
  * @returns MCP tool handler for searching memories
  */
+const MEMORY_CONTENT_MAX_LENGTH = 300;
+
 export function createSearchMemoriesTool(storage: MemoryStorage) {
   return {
     name: 'search_memories',
@@ -30,45 +32,94 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
     }) => {
       try {
         // Validate inputs
-        if (!query || query.trim().length === 0) {
+        const errorMsg = validateInput({ query, limit, threshold });
+        if (errorMsg) {
           return {
             content: [{
               type: 'text' as const,
-              text: 'Error: Search query is required.'
+              text: errorMsg
             }],
             isError: true
           };
-        }
+}
 
-        if (query.trim().length > 1000) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Search query must be 1000 characters or less.'
-            }],
-            isError: true
-          };
-        }
+/** Shared formatting helpers to avoid code duplication */
+function formatHeader(count: number) {
+  return [
+    `# 🔍 Found ${count} memory(ies):`,
+    '',
+    '---',
+    ''
+  ].join('\n');
+}
 
-        if (limit < 1 || limit > 100) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Limit must be between 1 and 100.'
-            }],
-            isError: true
-          };
-        }
+function formatFilters(query: string, threshold: number, category?: string) {
+  return [
+    '## Filters & Limit',
+    '',
+    `**Query:** "${query}"  `,
+    `**Threshold:** ${threshold}  `,
+    `**Filters:** ${category ? `Category: ${category}` : 'None'}`,
+    '',
+    '---',
+    ''
+  ].join('\n');
+}
 
-        if (threshold !== undefined && (threshold < 0 || threshold > 1)) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Threshold must be between 0 and 1.'
-            }],
-            isError: true
-          };
-        }
+function formatNote() {
+  return [
+    '**Note:**  ',
+    'The symbol "⋯📄" in content indicates truncated or incomplete data. Use get_memory with a specific ID to see full details, or search_memories for text-based search.',
+    ''
+  ].join('\n');
+}
+
+/** Validate input and return error message if invalid */
+function validateInput({ query, limit, threshold }: { query: string; limit: number; threshold?: number }) {
+  if (!query || query.trim().length === 0) return 'Error: Search query is required.';
+  if (query.trim().length > 1000) return 'Error: Search query must be 1000 characters or less.';
+  if (limit < 1 || limit > 100) return 'Error: Limit must be between 1 and 100.';
+  if (threshold !== undefined && (threshold < 0 || threshold > 1)) return 'Error: Threshold must be between 0 and 1.';
+  return null;
+}
+
+/** Get actual threshold value */
+function getActualThreshold(threshold: number | undefined, storage: MemoryStorage) {
+  return threshold ?? (storage as any).config?.defaultThreshold ?? 0.3;
+}
+
+/** Format memory list block */
+function formatMemoryList(results: any[]) {
+  const memoryBlocks = results.map((result: any, index: number) => formatMemory(result, index));
+  return [
+    '',
+    '## Memory List',
+    '',
+    memoryBlocks.join('\n\n')
+  ].join('\n');
+}
+
+/** Format single memory block */
+function formatMemory(result: any, index: number) {
+  const memory = result.memory;
+  const truncated = memory.content.length > MEMORY_CONTENT_MAX_LENGTH;
+  const contentBlock = `\`\`\`markdown
+${memory.content.substring(0, MEMORY_CONTENT_MAX_LENGTH)}${truncated ? '⋯📄' : ''}
+\`\`\``;
+  return [
+    `### Memory ${index + 1}`,
+    `**Memory ID:** ${memory.id}  `,
+    `**Relevance Score:** ${(result.score * 100).toFixed(1)}%`,
+    '',
+    `Content:  `,
+    contentBlock,
+    `**Category:** ${memory.category || 'Not specified'}  `,
+    `**Created:** ${new Date(memory.createdAt).toLocaleString()}  `,
+    `**Metadata:** ${memory.metadata && Object.keys(memory.metadata).length > 0 ? JSON.stringify(memory.metadata, null, 2) : 'None'}`,
+    '',
+    '---'
+  ].join('\n');
+}
 
         const searchInput = {
           query: query.trim(),
@@ -80,47 +131,34 @@ export function createSearchMemoriesTool(storage: MemoryStorage) {
         const results = await storage.searchMemories(searchInput);
 
         // Get the actual threshold used (from config if not provided)
-        const actualThreshold = threshold ?? (storage as any).config?.defaultThreshold ?? 0.3;
+        const actualThreshold = getActualThreshold(threshold, storage);
 
         if (results.length === 0) {
+          const outputText = [
+            formatHeader(0),
+            formatFilters(query, actualThreshold, category),
+            formatNote()
+          ].join('\n');
           return {
             content: [{
               type: 'text' as const,
-              text: `🔍 No memories found matching your search criteria.
-
-**Query:** "${query}"
-**Threshold:** ${actualThreshold}
-**Filters:** ${[
-                category && `Category: ${category}`
-              ].filter(Boolean).join(', ') || 'None'}
-
-Try adjusting your search query or using different keywords.`
+              text: outputText
             }]
           };
         }
 
-        const resultText = results.map((result, index) => {
-          const memory = result.memory;
-          return `**${index + 1}. Memory ID:** ${memory.id}
-**Relevance Score:** ${(result.score * 100).toFixed(1)}%
-**Content:** ${memory.content.substring(0, 300)}${memory.content.length > 300 ? '...' : ''}
-**Category:** ${memory.category || 'Not specified'}
-**Created:** ${new Date(memory.createdAt).toLocaleString()}
-**Metadata:** ${Object.keys(memory.metadata).length > 0 ? JSON.stringify(memory.metadata, null, 2) : 'None'}`;
-        }).join('\n\n---\n\n');
+        // --- Compose output ---
+        const outputText = [
+          formatHeader(results.length),
+          formatFilters(query, actualThreshold, category),
+          formatMemoryList(results),
+          formatNote()
+        ].join('\n');
 
         return {
           content: [{
             type: 'text' as const,
-            text: `🔍 Found ${results.length} memory(ies) matching your search:
-
-**Query:** "${query}"
-**Threshold:** ${actualThreshold}
-**Filters:** ${[
-              category && `Category: ${category}`
-            ].filter(Boolean).join(', ') || 'None'}
-
-${resultText}`
+            text: outputText
           }]
         };
       } catch (error) {
